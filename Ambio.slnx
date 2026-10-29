@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/misc/">
+    <File Path="Directory.Packages.props" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Ambio.Api/Ambio.Api.csproj" />
   </Folder>
