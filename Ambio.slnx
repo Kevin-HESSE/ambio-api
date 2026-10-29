@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Ambio.Api/Ambio.Api.csproj" />
+  </Folder>
+</Solution>
