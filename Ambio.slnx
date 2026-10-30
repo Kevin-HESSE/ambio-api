@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/docker/">
+    <File Path="docker-compose.yaml" />
+  </Folder>
   <Folder Name="/misc/">
     <File Path="Directory.Packages.props" />
     <File Path=".editorconfig" />
