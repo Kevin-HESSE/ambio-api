@@ -16,10 +16,13 @@ builder.Services.AddDbContext<AmbioDbContext>(options =>
 var app = builder.Build();
 
 //TODO need to be remove when migrations are in place
-var scope = app.Services.CreateScope();
-var context = scope.ServiceProvider.GetRequiredService<AmbioDbContext>();
-context.Database.EnsureDeleted();
-context.Database.EnsureCreated();
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<AmbioDbContext>();
+    context.Database.EnsureDeleted();
+    context.Database.EnsureCreated();
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -41,7 +44,6 @@ app.MapGet(
     "/job-applications/{id:guid}",
     async Task<IResult> (Guid id, AmbioDbContext ambioDbContext) =>
     {
-        // Serves match from memory, otherwise it will be fetched from database
         var jobApplication = await ambioDbContext.JobApplications.FindAsync(id);
 
         return jobApplication is not null
