@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ambio.Api.Data;
 
-public class AmbioContext : DbContext
+public class AmbioDbContext : DbContext
 {
-    public AmbioContext(DbContextOptions<AmbioContext> options) : base(options)
+    public AmbioDbContext(DbContextOptions<AmbioDbContext> options) : base(options)
     {
     }
 
