@@ -36,7 +36,15 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
 
     protected async Task AssertNumberOfJobApplicationsInDatabaseAsync(int count)
     {
-        var numberOfJobApplications = await VerificationDbContext.JobApplications.CountAsync(TestContext.Current.CancellationToken);
+        var numberOfJobApplications = await VerificationDbContext.JobApplications
+            .CountAsync(TestContext.Current.CancellationToken);
         Assert.Equal(count, numberOfJobApplications);
+    }
+
+    protected Task<JobApplication> GetPersistedJobApplicationAsync(Guid id)
+    {
+        return VerificationDbContext.JobApplications
+            .AsNoTracking()
+            .SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
     }
 }

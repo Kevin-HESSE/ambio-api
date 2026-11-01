@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Time.Testing;
 
 using Npgsql;
 
@@ -35,6 +36,8 @@ public class AmbioApiFactory : WebApplicationFactory<IApiMarker>, IAsyncLifetime
 
     private string ConnectionString => _dbContainer.GetConnectionString();
 
+    public FakeTimeProvider FakeTimeProvider { get; } = new ();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Disable logging for integration tests
@@ -45,6 +48,9 @@ public class AmbioApiFactory : WebApplicationFactory<IApiMarker>, IAsyncLifetime
 
         builder.ConfigureServices(collection =>
         {
+            collection.RemoveAll<TimeProvider>();
+            collection.AddSingleton<TimeProvider>(FakeTimeProvider);
+
             collection.RemoveAll<AmbioDbContext>();
             collection.AddDbContext<AmbioDbContext>(options =>
             {

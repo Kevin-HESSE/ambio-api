@@ -23,8 +23,7 @@ public class UpdateTests : BaseJobApplicationTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var content = await ReadContentAsync<JobApplication>(response);
-        var persisted = await VerificationDbContext.JobApplications
-            .FirstAsync(x => x.Id == jobApplication.Id, TestContext.Current.CancellationToken);
+        var persisted = await GetPersistedJobApplicationAsync(jobApplication.Id);
 
         Assert.Equal(jobApplication.Title, content.Title);
         Assert.Equal(jobApplication.Title, persisted.Title);
@@ -38,5 +37,28 @@ public class UpdateTests : BaseJobApplicationTests
         var fakeGuid = Guid.CreateVersion7();
         var response = await Client.PutAsJsonAsync($"{BaseUrl}/{fakeGuid}", jobApplication, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_WhenJobApplicationExists_ShouldUpdateTimestamps()
+    {
+        var jobApplication = await CreateJobApplicationAsync();
+        var expectedCreatedAt = FakeTimeProvider.GetUtcNow().UtcDateTime;
+        FakeTimeProvider.Advance(TimeSpan.FromDays(1));
+        var expectedUpdatedAt = FakeTimeProvider.GetUtcNow().UtcDateTime;
+
+        jobApplication.Title = "Updated Title";
+
+        var response = await Client.PutAsJsonAsync($"{BaseUrl}/{jobApplication.Id}", jobApplication, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var content = await ReadContentAsync<JobApplication>(response);
+        var persistedJobApplication = await GetPersistedJobApplicationAsync(jobApplication.Id);
+
+        Assert.Equal(expectedCreatedAt, content.CreatedAt);
+        Assert.Equal(expectedUpdatedAt, content.UpdatedAt);
+
+        Assert.Equal(expectedCreatedAt, persistedJobApplication.CreatedAt);
+        Assert.Equal(expectedUpdatedAt, persistedJobApplication.UpdatedAt);
     }
 }

@@ -7,10 +7,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<AmbioDbContext>(options =>
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<TimestampInterceptor>();
+builder.Services.AddDbContext<AmbioDbContext>((provider, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.UseSnakeCaseNamingConvention();
+    options.AddInterceptors(provider.GetRequiredService<TimestampInterceptor>());
 });
 
 var app = builder.Build();
@@ -74,7 +77,6 @@ app.MapPut(
         existingApplication.Company = jobApplication.Company;
         existingApplication.Status = jobApplication.Status;
         existingApplication.AppliedOn = jobApplication.AppliedOn;
-        existingApplication.UpdatedAt = DateTime.UtcNow;
 
         await ambioDbContext.SaveChangesAsync();
 

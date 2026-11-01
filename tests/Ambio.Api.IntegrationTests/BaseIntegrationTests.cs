@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Ambio.Api.Data;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Ambio.Api.IntegrationTests;
 
@@ -16,6 +17,7 @@ public abstract class BaseIntegrationTests : IAsyncLifetime
     private AsyncServiceScope _verificationScope;
     protected AmbioDbContext DbContext { get; private set; } = null!;
     protected AmbioDbContext VerificationDbContext { get; private set; } = null!;
+    protected FakeTimeProvider FakeTimeProvider => _factory.FakeTimeProvider;
 
     protected BaseIntegrationTests(AmbioApiFactory factory)
     {
