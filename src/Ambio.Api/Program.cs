@@ -10,11 +10,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<TimestampInterceptor>();
 builder.Services.AddDbContext<AmbioDbContext>((provider, options) =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-    options.UseSnakeCaseNamingConvention();
-    options.AddInterceptors(provider.GetRequiredService<TimestampInterceptor>());
-});
+    {
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+        options.UseSnakeCaseNamingConvention();
+        options.AddInterceptors(provider.GetRequiredService<TimestampInterceptor>());
+    },
+    contextLifetime: ServiceLifetime.Scoped,
+    optionsLifetime: ServiceLifetime.Singleton);
 
 var app = builder.Build();
 
