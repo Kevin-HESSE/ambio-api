@@ -1,6 +1,6 @@
 using System.Net;
 
-using Ambio.Api.Models;
+using Ambio.Api.Dtos;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
 
@@ -16,7 +16,7 @@ public class GetAllTests : BaseJobApplicationTests
         var response = await Client.GetAsync(BaseUrl, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var content = await ReadContentAsync<List<JobApplication>>(response);
+        var content = await ReadContentAsync<List<JobApplicationResponse>>(response);
         Assert.Empty(content);
     }
 
@@ -29,7 +29,7 @@ public class GetAllTests : BaseJobApplicationTests
         var response = await Client.GetAsync(BaseUrl, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var content = await ReadContentAsync<List<JobApplication>>(response);
+        var content = await ReadContentAsync<List<JobApplicationResponse>>(response);
         Assert.Equal(count, content.Count);
     }
 }

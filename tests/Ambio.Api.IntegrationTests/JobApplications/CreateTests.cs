@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 
-using Ambio.Api.Models;
+using Ambio.Api.Dtos;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
 
@@ -20,7 +20,7 @@ public class CreateTests : BaseJobApplicationTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         await AssertNumberOfJobApplicationsInDatabaseAsync(1);
-        var content = await ReadContentAsync<JobApplication>(response);
+        var content = await ReadContentAsync<JobApplicationResponse>(response);
 
         var expectedLocation = new Uri($"{BaseUrl}/{content.Id}", UriKind.Relative);
         Assert.Equal(expectedLocation, response.Headers.Location);
@@ -37,9 +37,7 @@ public class CreateTests : BaseJobApplicationTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         var expectedTimestamp = FakeTimeProvider.GetUtcNow().UtcDateTime;
-        var content = await ReadContentAsync<JobApplication>(response);
-        Assert.Equal(expectedTimestamp, content.CreatedAt);
-        Assert.Equal(expectedTimestamp, content.UpdatedAt);
+        var content = await ReadContentAsync<JobApplicationResponse>(response);
 
         var persistedJobApplication = await GetPersistedJobApplicationAsync(content.Id);
         Assert.Equal(expectedTimestamp, persistedJobApplication.CreatedAt);

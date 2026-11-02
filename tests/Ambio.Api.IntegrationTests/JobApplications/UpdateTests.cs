@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 
-using Ambio.Api.Models;
+using Ambio.Api.Dtos;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
 
@@ -20,7 +20,7 @@ public class UpdateTests : BaseJobApplicationTests
         var response = await Client.PutAsJsonAsync($"{BaseUrl}/{jobApplication.Id}", jobApplication, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var content = await ReadContentAsync<JobApplication>(response);
+        var content = await ReadContentAsync<JobApplicationResponse>(response);
         var persisted = await GetPersistedJobApplicationAsync(jobApplication.Id);
 
         Assert.Equal(jobApplication.Title, content.Title);
@@ -50,11 +50,7 @@ public class UpdateTests : BaseJobApplicationTests
         var response = await Client.PutAsJsonAsync($"{BaseUrl}/{jobApplication.Id}", jobApplication, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var content = await ReadContentAsync<JobApplication>(response);
         var persistedJobApplication = await GetPersistedJobApplicationAsync(jobApplication.Id);
-
-        Assert.Equal(expectedCreatedAt, content.CreatedAt);
-        Assert.Equal(expectedUpdatedAt, content.UpdatedAt);
 
         Assert.Equal(expectedCreatedAt, persistedJobApplication.CreatedAt);
         Assert.Equal(expectedUpdatedAt, persistedJobApplication.UpdatedAt);

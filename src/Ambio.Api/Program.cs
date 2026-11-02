@@ -1,6 +1,8 @@
 using Ambio.Api.Data;
+using Ambio.Api.Dtos;
 using Ambio.Api.Models;
 
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,32 +36,35 @@ app.UseHttpsRedirection();
 
 app.MapGet(
     "/job-applications",
-    async (AmbioDbContext ambioDbContext) => await ambioDbContext.JobApplications.ToListAsync());
+    async (AmbioDbContext ambioDbContext) => await ambioDbContext.JobApplications
+        .Select(ja => ja.ToResponse())
+        .ToListAsync()
+    );
 
 app.MapGet(
     "/job-applications/{id:guid}",
-    async Task<IResult> (Guid id, AmbioDbContext ambioDbContext) =>
+    async Task<Results<NotFound, Ok<JobApplicationResponse>>> (Guid id, AmbioDbContext ambioDbContext) =>
     {
         var jobApplication = await ambioDbContext.JobApplications.FindAsync(id);
 
-        return jobApplication is not null
-            ? TypedResults.Ok(jobApplication)
-            : TypedResults.NotFound();
+        return jobApplication is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(jobApplication.ToResponse());
     });
 
 app.MapPost(
     "/job-applications",
-    async Task<IResult> (JobApplication jobApplication, AmbioDbContext ambioDbContext) =>
+    async Task<Results<BadRequest, Created<JobApplicationResponse>>> (JobApplication jobApplication, AmbioDbContext ambioDbContext) =>
     {
         await ambioDbContext.JobApplications.AddAsync(jobApplication);
         await ambioDbContext.SaveChangesAsync();
 
-        return TypedResults.Created($"/job-applications/{jobApplication.Id}", jobApplication);
+        return TypedResults.Created($"/job-applications/{jobApplication.Id}", jobApplication.ToResponse());
     });
 
 app.MapPut(
     "/job-applications/{id:guid}",
-    async Task<IResult> (Guid id, JobApplication jobApplication, AmbioDbContext ambioDbContext) =>
+    async Task<Results<NotFound, BadRequest, Ok<JobApplicationResponse>>> (Guid id, JobApplication jobApplication, AmbioDbContext ambioDbContext) =>
     {
         var existingApplication = await ambioDbContext.JobApplications.FindAsync(id);
 
@@ -73,12 +78,12 @@ app.MapPut(
 
         await ambioDbContext.SaveChangesAsync();
 
-        return TypedResults.Ok(existingApplication);
+        return TypedResults.Ok(existingApplication.ToResponse());
     });
 
 app.MapDelete(
     "/job-applications/{id:guid}",
-    async Task<IResult> (Guid id, AmbioDbContext ambioDbContext) =>
+    async Task<Results<NotFound, NoContent>> (Guid id, AmbioDbContext ambioDbContext) =>
     {
         var existingApplication = await ambioDbContext.JobApplications.FindAsync(id);
 

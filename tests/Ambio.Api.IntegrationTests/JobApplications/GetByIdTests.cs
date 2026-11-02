@@ -1,6 +1,6 @@
 using System.Net;
 
-using Ambio.Api.Models;
+using Ambio.Api.Dtos;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
 
@@ -18,7 +18,7 @@ public class GetByIdTests : BaseJobApplicationTests
         var response = await Client.GetAsync($"{BaseUrl}/{jobApplication.Id}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var content = await ReadContentAsync<JobApplication>(response);
+        var content = await ReadContentAsync<JobApplicationResponse>(response);
         Assert.Equal(jobApplication.Title, content.Title);
     }
 
