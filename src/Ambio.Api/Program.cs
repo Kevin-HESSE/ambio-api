@@ -20,15 +20,6 @@ builder.Services.AddDbContext<AmbioDbContext>((provider, options) =>
 
 var app = builder.Build();
 
-//TODO need to be remove when migrations are in place
-if (app.Environment.IsDevelopment())
-{
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<AmbioDbContext>();
-    context.Database.EnsureDeleted();
-    context.Database.EnsureCreated();
-}
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
