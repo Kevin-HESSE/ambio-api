@@ -12,4 +12,13 @@ public static class JobApplicationExtensions
         Status: application.Status.ToLabel(),
         AppliedAt: application.AppliedOn
     );
+
+    public static JobApplication ToEntity(this JobApplicationRequest request) => new JobApplication
+    {
+        Title = request.Title,
+        Company = request.Company,
+        Url = request.Url,
+        Status = request.Status,
+        AppliedOn = request.AppliedAt
+    };
 }

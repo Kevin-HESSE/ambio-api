@@ -1,3 +1,4 @@
+using Ambio.Api.Dtos;
 using Ambio.Api.Models;
 
 using Bogus;
@@ -46,5 +47,15 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
         return VerificationDbContext.JobApplications
             .AsNoTracking()
             .SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
+    }
+
+    protected static JobApplicationRequest GenerateJobApplicationRequest(JobApplication jobApplication, string? title = null)
+    {
+        return new JobApplicationRequest(
+            Title: title ?? jobApplication.Title,
+            Company: jobApplication.Company,
+            Url: jobApplication.Url,
+            Status: jobApplication.Status,
+            AppliedAt: jobApplication.AppliedOn);
     }
 }

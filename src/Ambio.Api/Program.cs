@@ -2,6 +2,8 @@ using Ambio.Api.Data;
 using Ambio.Api.Dtos;
 using Ambio.Api.Models;
 
+using FluentValidation;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +21,7 @@ builder.Services.AddDbContext<AmbioDbContext>((provider, options) =>
     },
     contextLifetime: ServiceLifetime.Scoped,
     optionsLifetime: ServiceLifetime.Singleton);
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
 
@@ -54,8 +57,19 @@ app.MapGet(
 
 app.MapPost(
     "/job-applications",
-    async Task<Results<BadRequest, Created<JobApplicationResponse>>> (JobApplication jobApplication, AmbioDbContext ambioDbContext) =>
+    async Task<Results<ValidationProblem, Created<JobApplicationResponse>>> (
+        JobApplicationRequest jobApplicationRequest,
+        AmbioDbContext ambioDbContext,
+        IValidator<JobApplicationRequest> validator) =>
     {
+        var validationResult = await validator.ValidateAsync(jobApplicationRequest);
+
+        if (!validationResult.IsValid)
+        {
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
+        }
+
+        var jobApplication = jobApplicationRequest.ToEntity();
         await ambioDbContext.JobApplications.AddAsync(jobApplication);
         await ambioDbContext.SaveChangesAsync();
 
@@ -64,17 +78,31 @@ app.MapPost(
 
 app.MapPut(
     "/job-applications/{id:guid}",
-    async Task<Results<NotFound, BadRequest, Ok<JobApplicationResponse>>> (Guid id, JobApplication jobApplication, AmbioDbContext ambioDbContext) =>
+    async Task<Results<NotFound, ValidationProblem, Ok<JobApplicationResponse>>> (
+        Guid id,
+        JobApplicationRequest jobApplicationRequest,
+        AmbioDbContext ambioDbContext,
+        IValidator<JobApplicationRequest> validator) =>
     {
+        var validationResult = await validator.ValidateAsync(jobApplicationRequest);
+
+        if (!validationResult.IsValid)
+        {
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
+        }
+
         var existingApplication = await ambioDbContext.JobApplications.FindAsync(id);
 
-        if (existingApplication is null) return TypedResults.NotFound();
+        if (existingApplication is null)
+        {
+            return TypedResults.NotFound();
+        }
 
-        existingApplication.Title = jobApplication.Title;
-        existingApplication.Url = jobApplication.Url;
-        existingApplication.Company = jobApplication.Company;
-        existingApplication.Status = jobApplication.Status;
-        existingApplication.AppliedOn = jobApplication.AppliedOn;
+        existingApplication.Title = jobApplicationRequest.Title;
+        existingApplication.Url = jobApplicationRequest.Url;
+        existingApplication.Company = jobApplicationRequest.Company;
+        existingApplication.Status = jobApplicationRequest.Status;
+        existingApplication.AppliedOn = jobApplicationRequest.AppliedAt;
 
         await ambioDbContext.SaveChangesAsync();
 
