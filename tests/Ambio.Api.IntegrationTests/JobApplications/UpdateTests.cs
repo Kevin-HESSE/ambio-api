@@ -3,8 +3,6 @@ using System.Net.Http.Json;
 
 using Ambio.Api.Models;
 
-using Microsoft.EntityFrameworkCore;
-
 namespace Ambio.Api.IntegrationTests.JobApplications;
 
 public class UpdateTests : BaseJobApplicationTests

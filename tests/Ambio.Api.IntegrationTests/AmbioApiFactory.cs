@@ -36,7 +36,7 @@ public class AmbioApiFactory : WebApplicationFactory<IApiMarker>, IAsyncLifetime
 
     private string ConnectionString => _dbContainer.GetConnectionString();
 
-    public FakeTimeProvider FakeTimeProvider { get; } = new ();
+    public FakeTimeProvider FakeTimeProvider { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -46,18 +46,16 @@ public class AmbioApiFactory : WebApplicationFactory<IApiMarker>, IAsyncLifetime
             logging.ClearProviders();
         });
 
+        // Avoid the Development-only EnsureDeleted/EnsureCreated in Program.cs; the schema comes from migrations
+        builder.UseEnvironment("Testing");
+
+        // Point the app's own DbContext registration (snake_case, interceptors, ...) at the test container
+        builder.UseSetting("ConnectionStrings:DefaultConnection", ConnectionString);
+
         builder.ConfigureServices(collection =>
         {
             collection.RemoveAll<TimeProvider>();
             collection.AddSingleton<TimeProvider>(FakeTimeProvider);
-
-            collection.RemoveAll<AmbioDbContext>();
-            collection.AddDbContext<AmbioDbContext>(options =>
-            {
-                options.UseNpgsql(ConnectionString);
-                // In case of pending model changes, ignore the warning
-                // options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
-            });
         });
     }
 
@@ -72,7 +70,7 @@ public class AmbioApiFactory : WebApplicationFactory<IApiMarker>, IAsyncLifetime
 
         using var scope = Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AmbioDbContext>();
-        await dbContext.Database.EnsureCreatedAsync();
+        await dbContext.Database.MigrateAsync();
 
         _dbConnection = new NpgsqlConnection(ConnectionString);
         await _dbConnection.OpenAsync();

@@ -4,7 +4,7 @@ namespace Ambio.Api.Models;
 
 public class JobApplication : ITimeStampable
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; } = Guid.CreateVersion7();
     public required string Title { get; set; }
     public required string Company { get; set; }
     public required string Url { get; set; }
