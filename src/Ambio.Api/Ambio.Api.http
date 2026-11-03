@@ -1,6 +1,39 @@
 @Ambio.Api_HostAddress = http://localhost:5262
+# Replace with an id returned by the POST request
+@id = 00000000-0000-0000-0000-000000000000
 
-GET {{Ambio.Api_HostAddress}}/weatherforecast/
+### List all job applications
+GET {{Ambio.Api_HostAddress}}/job-applications
 Accept: application/json
 
-###
+### Get a job application by id
+GET {{Ambio.Api_HostAddress}}/job-applications/{{id}}
+Accept: application/json
+
+### Create a job application
+# status: 0 Draft, 1 Applied, 2 Interview, 3 Offer, 4 Rejected, 5 Withdrawn
+POST {{Ambio.Api_HostAddress}}/job-applications
+Content-Type: application/json
+
+{
+  "title": "Backend developer",
+  "company": "Acme",
+  "url": "https://acme.io/jobs/1",
+  "status": 1,
+  "appliedAt": "2026-11-03"
+}
+
+### Update a job application
+PUT {{Ambio.Api_HostAddress}}/job-applications/{{id}}
+Content-Type: application/json
+
+{
+  "title": "Senior backend developer",
+  "company": "Acme",
+  "url": "https://acme.io/jobs/1",
+  "status": 2,
+  "appliedAt": "2026-11-03"
+}
+
+### Delete a job application
+DELETE {{Ambio.Api_HostAddress}}/job-applications/{{id}}

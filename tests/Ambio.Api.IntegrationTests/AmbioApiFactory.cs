@@ -46,7 +46,7 @@ public class AmbioApiFactory : WebApplicationFactory<IApiMarker>, IAsyncLifetime
             logging.ClearProviders();
         });
 
-        // Avoid the Development-only EnsureDeleted/EnsureCreated in Program.cs; the schema comes from migrations
+        // Run outside Development: skips appsettings.Development.json and Development-only endpoints (OpenAPI, Swagger UI)
         builder.UseEnvironment("Testing");
 
         // Point the app's own DbContext registration (snake_case, interceptors, ...) at the test container
