@@ -1,0 +1,21 @@
+name: ambio-api
+services:
+  database:
+    image: postgres:17
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ambio}
+      POSTGRES_USER: ${POSTGRES_USER:-ambio}
+      POSTGRES_DB: ${POSTGRES_DB:-ambio}
+    volumes:
+      - ambio-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER}" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+
+volumes:
+  ambio-data:

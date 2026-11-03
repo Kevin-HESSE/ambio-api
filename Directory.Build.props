@@ -1,0 +1,9 @@
+<Project>
+  <!-- See https://aka.ms/dotnet/msbuild/customize for more details on customizing your build -->
+  <PropertyGroup>
+      <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+      <GenerateDocumentationFile>true</GenerateDocumentationFile>
+      <NoWarn>$(NoWarn);CS1591</NoWarn>
+      <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>
