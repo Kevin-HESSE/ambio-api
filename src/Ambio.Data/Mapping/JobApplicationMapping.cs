@@ -3,7 +3,7 @@ using Ambio.Domain.JobApplications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Ambio.Api.Data.EntityMapping;
+namespace Ambio.Data.Mapping;
 
 public class JobApplicationMapping : IEntityTypeConfiguration<JobApplication>
 {

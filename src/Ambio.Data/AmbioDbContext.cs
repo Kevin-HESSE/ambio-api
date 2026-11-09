@@ -1,9 +1,8 @@
-using Ambio.Api.Models;
 using Ambio.Domain.JobApplications;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace Ambio.Api.Data;
+namespace Ambio.Data;
 
 public sealed class AmbioDbContext : DbContext
 {

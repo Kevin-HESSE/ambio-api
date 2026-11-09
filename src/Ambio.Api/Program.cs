@@ -1,6 +1,6 @@
-using Ambio.Api.Data;
 using Ambio.Api.Dtos;
 using Ambio.Api.Models;
+using Ambio.Data;
 
 using FluentValidation;
 
@@ -12,15 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<TimestampInterceptor>();
-builder.Services.AddDbContext<AmbioDbContext>((provider, options) =>
-    {
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-        options.UseSnakeCaseNamingConvention();
-        options.AddInterceptors(provider.GetRequiredService<TimestampInterceptor>());
-    },
-    contextLifetime: ServiceLifetime.Scoped,
-    optionsLifetime: ServiceLifetime.Singleton);
+
+builder.Services.AddAmbioContext(
+    migrationAssembly: "Ambio.Migrations",
+    connectionString: builder.Configuration.GetConnectionString("DefaultConnection"));
+
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
@@ -42,7 +38,7 @@ app.MapGet(
     async (AmbioDbContext ambioDbContext) => await ambioDbContext.JobApplications
         .Select(ja => ja.ToResponse())
         .ToListAsync()
-    );
+);
 
 app.MapGet(
     "/job-applications/{id:guid}",
@@ -124,4 +120,3 @@ app.MapDelete(
     });
 
 app.Run();
-

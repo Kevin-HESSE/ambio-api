@@ -3,9 +3,9 @@ using Ambio.Domain.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Ambio.Api.Data;
+namespace Ambio.Data.Interceptors;
 
-public sealed class TimestampInterceptor : SaveChangesInterceptor
+internal sealed class TimestampInterceptor : SaveChangesInterceptor
 {
     private readonly TimeProvider _timeProvider;
 
