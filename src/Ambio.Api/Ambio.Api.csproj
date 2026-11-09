@@ -19,4 +19,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Ambio.Domain\Ambio.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

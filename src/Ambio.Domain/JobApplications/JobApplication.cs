@@ -1,6 +1,6 @@
-using Ambio.Api.Common;
+using Ambio.Domain.Abstractions;
 
-namespace Ambio.Api.Models;
+namespace Ambio.Domain.JobApplications;
 
 public class JobApplication : ITimeStampable
 {

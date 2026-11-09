@@ -1,4 +1,4 @@
-using Ambio.Api.Models;
+using Ambio.Domain.JobApplications;
 
 namespace Ambio.Api.Dtos;
 

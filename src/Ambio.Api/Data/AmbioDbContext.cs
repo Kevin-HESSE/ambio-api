@@ -1,4 +1,5 @@
 using Ambio.Api.Models;
+using Ambio.Domain.JobApplications;
 
 using Microsoft.EntityFrameworkCore;
 

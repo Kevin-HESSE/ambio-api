@@ -1,4 +1,4 @@
-using Ambio.Api.Common;
+using Ambio.Domain.Abstractions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;

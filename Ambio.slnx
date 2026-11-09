@@ -15,6 +15,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Ambio.Api/Ambio.Api.csproj" />
+    <Project Path="src/Ambio.Domain/Ambio.Domain.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ambio.Api.IntegrationTests/Ambio.Api.IntegrationTests.csproj" />

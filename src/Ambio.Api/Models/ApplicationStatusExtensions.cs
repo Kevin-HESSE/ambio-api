@@ -1,3 +1,5 @@
+using Ambio.Domain.JobApplications;
+
 namespace Ambio.Api.Models;
 
 public static class ApplicationStatusExtensions
