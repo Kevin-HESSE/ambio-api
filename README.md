@@ -17,23 +17,6 @@ It is meant to run locally as a personal tool, with a public demo as a showcase.
 | Tests      | xUnit v3 on Microsoft Testing Platform, Testcontainers, Respawn, Bogus |
 | Tooling    | Central Package Management, `dotnet-ef` local tool, `.editorconfig`    |
 
-## Project structure
-
-```text
-src/Ambio.Api/
-├── Common/          # Shared interfaces (ITimeStampable)
-├── Data/            # DbContext, entity mappings, interceptors, migrations
-├── Dtos/            # Request / response contracts
-├── Models/          # Entities, enums, mapping extensions
-├── Validators/      # FluentValidation validators
-├── Program.cs       # Service registration and endpoints
-└── Ambio.Api.http   # Ready-to-use HTTP requests
-tests/Ambio.Api.IntegrationTests/
-├── JobApplications/ # One test class per endpoint
-└── AmbioApiFactory.cs, BaseIntegrationTests.cs
-docs/                # Reference notes and audits (in French)
-```
-
 ## Prerequisites
 
 - **.NET 10 SDK**: see the official [Microsoft documentation](https://dotnet.microsoft.com/en-us/download/dotnet), or use [`dotnetup`](https://learn.microsoft.com/dotnet/core/tools/dotnetup/).
@@ -56,7 +39,7 @@ docs/                # Reference notes and audits (in French)
 3. Apply the migrations:
 
    ```shell
-   dotnet ef database update --project src/Ambio.Api
+   dotnet ef database update --project src/Ambio.Migrations --startup-project src/Ambio.Api
    ```
 
 4. Start the API:
@@ -90,20 +73,56 @@ dotnet test --project tests/Ambio.Api.IntegrationTests --filter-class "*CreateTe
 dotnet test --project tests/Ambio.Api.IntegrationTests --filter-method "*GetById_WhenJobApplicationExists_ShouldReturnOk"
 ```
 
+## Project structure
+
+The solution is split by layer. Inside each project, files are grouped by feature (`JobApplications/`).
+
+```text
+src/
+├── Ambio.Domain/        # Entities, enums, abstractions (no dependencies)
+├── Ambio.Data/          # EF Core: DbContext, entity mappings, interceptors
+├── Ambio.Migrations/    # EF Core migrations and model snapshot
+├── Ambio.Application/   # Services, request / response contracts, validators
+└── Ambio.Api/           # Endpoints, OpenAPI, service registration (Program.cs)
+    └── Ambio.Api.http   # Ready-to-use HTTP requests
+tests/Ambio.Api.IntegrationTests/
+├── JobApplications/     # One test class per endpoint
+└── AmbioApiFactory.cs, BaseIntegrationTests.cs
+docs/                    # Reference notes and audits (in French)
+```
+
+Project references:
+
+```text
+Ambio.Api ──► Ambio.Application ──► Ambio.Data ──► Ambio.Domain
+    └───────► Ambio.Migrations ─────────┘
+```
+
+- `Ambio.Domain` has no dependencies.
+- EF Core is only referenced by `Ambio.Data` and `Ambio.Migrations`. `Ambio.Application` uses the `DbContext` directly, without a repository layer.
+- `Ambio.Api` is the startup project. It references `Ambio.Migrations` so that the migrations are loaded at runtime.
+
 ## Database & migrations
+
+The `DbContext` lives in `Ambio.Data`, and the migrations in `Ambio.Migrations`. Every `dotnet ef` command needs two options:
+
+- `--project src/Ambio.Migrations`: where the migrations are written;
+- `--startup-project src/Ambio.Api`: the project that is run to build the configured `DbContext` (connection string, naming convention, interceptors).
+
+New migrations are created at the root of `Ambio.Migrations`, next to the model snapshot, in the `Ambio.Migrations` namespace.
 
 ```shell
 # Check whether the model has changes without a migration
-dotnet ef migrations has-pending-model-changes --project src/Ambio.Api
+dotnet ef migrations has-pending-model-changes --project src/Ambio.Migrations --startup-project src/Ambio.Api
 
 # Create a migration
-dotnet ef migrations add <MigrationName> --project src/Ambio.Api --output-dir Data/Migrations
+dotnet ef migrations add <MigrationName> --project src/Ambio.Migrations --startup-project src/Ambio.Api
 
 # Apply migrations
-dotnet ef database update --project src/Ambio.Api
+dotnet ef database update --project src/Ambio.Migrations --startup-project src/Ambio.Api
 
 # Remove the last migration (if not applied)
-dotnet ef migrations remove --project src/Ambio.Api
+dotnet ef migrations remove --project src/Ambio.Migrations --startup-project src/Ambio.Api
 ```
 
 To reset the local database, delete the container and its volume:
