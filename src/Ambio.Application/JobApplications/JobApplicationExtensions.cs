@@ -1,7 +1,6 @@
-using Ambio.Api.Dtos;
 using Ambio.Domain.JobApplications;
 
-namespace Ambio.Api.Models;
+namespace Ambio.Application.JobApplications;
 
 public static class JobApplicationExtensions
 {

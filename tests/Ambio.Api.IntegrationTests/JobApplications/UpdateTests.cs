@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 
-using Ambio.Api.Dtos;
+using Ambio.Application.JobApplications;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
 

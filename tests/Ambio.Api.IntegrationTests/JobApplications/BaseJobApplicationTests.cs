@@ -1,4 +1,4 @@
-using Ambio.Api.Dtos;
+using Ambio.Application.JobApplications;
 using Ambio.Domain.JobApplications;
 
 using Bogus;

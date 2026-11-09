@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ambio.Application\Ambio.Application.csproj" />
     <ProjectReference Include="..\Ambio.Data\Ambio.Data.csproj" />
     <ProjectReference Include="..\Ambio.Domain\Ambio.Domain.csproj" />
     <ProjectReference Include="..\Ambio.Migrations\Ambio.Migrations.csproj" />

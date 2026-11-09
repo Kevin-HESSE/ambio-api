@@ -1,6 +1,6 @@
 using Ambio.Domain.JobApplications;
 
-namespace Ambio.Api.Dtos;
+namespace Ambio.Application.JobApplications;
 
 public record JobApplicationRequest(
     string Title,

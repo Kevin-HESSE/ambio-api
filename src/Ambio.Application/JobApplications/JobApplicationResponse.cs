@@ -1,4 +1,4 @@
-namespace Ambio.Api.Dtos;
+namespace Ambio.Application.JobApplications;
 
 public record JobApplicationResponse(
     Guid Id,

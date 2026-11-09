@@ -15,6 +15,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Ambio.Api/Ambio.Api.csproj" />
+    <Project Path="src/Ambio.Application/Ambio.Application.csproj" />
     <Project Path="src/Ambio.Data/Ambio.Data.csproj" />
     <Project Path="src/Ambio.Domain/Ambio.Domain.csproj" />
     <Project Path="src/Ambio.Migrations/Ambio.Migrations.csproj" />
