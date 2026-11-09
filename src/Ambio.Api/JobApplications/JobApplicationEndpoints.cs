@@ -20,66 +20,72 @@ public static class JobApplicationEndpoints
     }
 
     private static async Task<IResult> GetCollectionHandler(
-        JobApplicationServices jobApplicationServices)
+        JobApplicationService jobApplicationService,
+        CancellationToken cancellationToken)
     {
-        var jobApplications =  await jobApplicationServices.GetAll();
+        var jobApplications = await jobApplicationService.GetAll(cancellationToken);
 
         return TypedResults.Ok(jobApplications);
     }
 
-    private static async Task<IResult> GetHandler(
+    private static async Task<Results<NotFound, Ok<JobApplicationResponse>>> GetHandler(
         Guid id,
-        JobApplicationServices jobApplicationServices)
+        JobApplicationService jobApplicationService,
+        CancellationToken cancellationToken)
     {
-        var jobApplication = await jobApplicationServices.GetById(id);
+        var jobApplication = await jobApplicationService.GetById(id, cancellationToken);
 
         return jobApplication is null
             ? TypedResults.NotFound()
             : TypedResults.Ok(jobApplication);
     }
 
-    private static async Task<Results<ValidationProblem, Created<JobApplicationResponse>>> CreateHandler (
+    private static async Task<Results<ValidationProblem, Created<JobApplicationResponse>>> CreateHandler(
         JobApplicationRequest jobApplicationRequest,
-        JobApplicationServices jobApplicationServices)
+        JobApplicationService jobApplicationService,
+        CancellationToken cancellationToken)
     {
-        var validationResult = await jobApplicationServices.Validate(jobApplicationRequest);
+        var validationResult = await jobApplicationService.Validate(jobApplicationRequest);
 
         if (!validationResult.IsValid)
         {
             return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
-        var jobApplication = await jobApplicationServices.Create(jobApplicationRequest);
+        var jobApplication = await jobApplicationService.Create(jobApplicationRequest, cancellationToken);
 
-        return TypedResults.Created($"/job-applications/{jobApplication.Id}", jobApplication);
+        return TypedResults.Created($"{Prefix}/{jobApplication.Id}", jobApplication);
     }
 
-    private static async Task<Results<NotFound, ValidationProblem, Ok<JobApplicationResponse>>> UpdateHandler (
+    private static async Task<Results<NotFound, ValidationProblem, Ok<JobApplicationResponse>>> UpdateHandler(
         Guid id,
         JobApplicationRequest jobApplicationRequest,
-        JobApplicationServices jobApplicationServices)
+        JobApplicationService jobApplicationService,
+        CancellationToken cancellationToken)
     {
-        var validationResult = await jobApplicationServices.Validate(jobApplicationRequest);
+        var validationResult = await jobApplicationService.Validate(jobApplicationRequest);
 
         if (!validationResult.IsValid)
         {
             return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
-        var existingApplication = await jobApplicationServices.Update(id, jobApplicationRequest);
+        var existingApplication = await jobApplicationService.Update(id, jobApplicationRequest, cancellationToken);
 
         return existingApplication is null
-            ? (Results<NotFound, ValidationProblem, Ok<JobApplicationResponse>>)TypedResults.NotFound()
-            : (Results<NotFound, ValidationProblem, Ok<JobApplicationResponse>>)TypedResults.Ok(
-                existingApplication);
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(existingApplication);
     }
 
-    private static async Task<Results<NotFound, NoContent>> DeleteHandler (Guid id, JobApplicationServices jobApplicationServices)
+    private static async Task<Results<NotFound, NoContent>> DeleteHandler(
+        Guid id,
+        JobApplicationService jobApplicationService,
+        CancellationToken cancellationToken)
     {
-        var isApplicationDeleted = await jobApplicationServices.Delete(id);
+        var isApplicationDeleted = await jobApplicationService.Delete(id, cancellationToken);
 
         return isApplicationDeleted
-            ? (Results<NotFound, NoContent>)TypedResults.NoContent()
-            : (Results<NotFound, NoContent>)TypedResults.NotFound();
+            ? TypedResults.NoContent()
+            : TypedResults.NotFound();
     }
 }

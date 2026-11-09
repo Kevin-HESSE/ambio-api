@@ -4,7 +4,7 @@ namespace Ambio.Application.JobApplications;
 
 public static class JobApplicationExtensions
 {
-    public static JobApplicationResponse ToResponse(this JobApplication application) => new (
+    public static JobApplicationResponse ToResponse(this JobApplication application) => new(
         Id: application.Id,
         Title: application.Title,
         Company: application.Company,

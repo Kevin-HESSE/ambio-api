@@ -6,11 +6,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddAmbioContext(
+builder.Services.AddAmbioData(
     migrationAssembly: "Ambio.Migrations",
     connectionString: builder.Configuration.GetConnectionString("DefaultConnection"));
 
-builder.Services.AddAmbioServices();
+builder.Services.AddAmbioApplication();
 
 var app = builder.Build();
 
