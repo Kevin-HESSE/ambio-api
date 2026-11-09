@@ -1,4 +1,4 @@
-namespace Ambio.Api.Common;
+namespace Ambio.Domain.Abstractions;
 
 public interface ITimeStampable
 {

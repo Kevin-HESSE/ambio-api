@@ -1,9 +1,8 @@
-﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Ambio.Api.Data.Migrations
+namespace Ambio.Migrations
 {
     /// <inheritdoc />
     public partial class CreateJobApplicationTable : Migration

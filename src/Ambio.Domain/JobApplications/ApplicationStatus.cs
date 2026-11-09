@@ -1,4 +1,4 @@
-namespace Ambio.Api.Models;
+namespace Ambio.Domain.JobApplications;
 
 /// <summary>Where an application stands: Draft → Applied → Interview → Offer / Rejected / Withdrawn.</summary>
 public enum ApplicationStatus

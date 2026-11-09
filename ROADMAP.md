@@ -27,11 +27,17 @@ Status: **Done** · **Next** · **Planned** · **Later**
 - [ ] CORS policy for the front-end, with explicit origins
 - [ ] Bind PostgreSQL to `127.0.0.1` in `docker-compose.yaml`
 - [ ] OpenAPI metadata (names, summaries, tags)
+- [ ] Integration tests for invalid payloads (`400` on create and update)
+- [ ] Typed result on `GET /job-applications` for the OpenAPI document
 
-## Refactoring — Planned
+## Layered architecture — Done
 
-- [ ] Split `Program.cs`: one endpoint group (`MapGroup`) per feature
-- [ ] Move service registration into extension methods
+- [x] Split the solution into projects: `Domain`, `Data`, `Migrations`, `Application`, `Api`
+- [x] Migrations in a dedicated project
+- [x] Business logic moved from endpoints to application services, with validation in the service
+- [x] Split `Program.cs`: one endpoint group (`MapGroup`) per feature
+- [x] Move service registration into extension methods
+- [x] `CancellationToken` passed from endpoints to EF Core
 
 ## CI/CD — Planned
 

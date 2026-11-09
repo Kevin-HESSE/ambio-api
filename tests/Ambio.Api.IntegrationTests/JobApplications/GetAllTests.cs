@@ -1,6 +1,6 @@
 using System.Net;
 
-using Ambio.Api.Dtos;
+using Ambio.Application.JobApplications;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
 

@@ -6,17 +6,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EFCore.NamingConventions" />
-    <PackageReference Include="FluentValidation" />
-    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ambio.Application\Ambio.Application.csproj" />
+    <ProjectReference Include="..\Ambio.Data\Ambio.Data.csproj" />
+    <ProjectReference Include="..\Ambio.Domain\Ambio.Domain.csproj" />
+    <ProjectReference Include="..\Ambio.Migrations\Ambio.Migrations.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-using Ambio.Api.Data;
+using Ambio.Data;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;

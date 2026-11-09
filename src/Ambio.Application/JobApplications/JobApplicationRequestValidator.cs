@@ -1,8 +1,6 @@
-using Ambio.Api.Dtos;
-
 using FluentValidation;
 
-namespace Ambio.Api.Validators;
+namespace Ambio.Application.JobApplications;
 
 public class JobApplicationRequestValidator : AbstractValidator<JobApplicationRequest>
 {

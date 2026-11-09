@@ -1,5 +1,5 @@
-using Ambio.Api.Dtos;
-using Ambio.Api.Models;
+using Ambio.Application.JobApplications;
+using Ambio.Domain.JobApplications;
 
 using Bogus;
 
