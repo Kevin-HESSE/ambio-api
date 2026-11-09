@@ -8,11 +8,9 @@ namespace Ambio.Application;
 
 public static class ApplicationExtensions
 {
-    public static IServiceCollection AddAmbioServices(this IServiceCollection services)
+    public static void AddAmbioServices(this IServiceCollection services)
     {
         services.AddValidatorsFromAssemblyContaining<IAmbioApplication>();
         services.AddScoped<JobApplicationServices>();
-
-        return services;
     }
 }

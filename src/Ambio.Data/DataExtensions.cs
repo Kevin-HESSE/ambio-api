@@ -7,7 +7,7 @@ namespace Ambio.Data;
 
 public static class DataExtensions
 {
-    public static IServiceCollection AddAmbioContext(this IServiceCollection services, string migrationAssembly, string? connectionString)
+    public static void AddAmbioContext(this IServiceCollection services, string migrationAssembly, string? connectionString)
     {
         services.AddSingleton<TimestampInterceptor>();
         services.AddDbContext<AmbioDbContext>((provider, options) =>
@@ -21,7 +21,5 @@ public static class DataExtensions
             },
             contextLifetime: ServiceLifetime.Scoped,
             optionsLifetime: ServiceLifetime.Singleton);
-
-        return services;
     }
 }
