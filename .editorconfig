@@ -361,5 +361,5 @@ dotnet_code_quality_unused_parameters = all:suggestion
 dotnet_remove_unnecessary_suppression_exclusions = none
 
 # EF Core generated migrations
-[**/Migrations/*.cs]
+[**/Ambio.Migrations/*.cs]
 dotnet_diagnostic.IDE0005.severity = none

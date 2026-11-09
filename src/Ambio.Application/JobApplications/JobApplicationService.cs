@@ -1,7 +1,6 @@
 using Ambio.Data;
 
 using FluentValidation;
-using FluentValidation.Results;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -34,6 +33,13 @@ public class JobApplicationService
 
     public async Task<JobApplicationResponse> Create(JobApplicationRequest request, CancellationToken cancellationToken)
     {
+        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
+
         var jobApplication = request.ToEntity();
         await _ambioDbContext.JobApplications.AddAsync(jobApplication, cancellationToken);
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
@@ -43,6 +49,13 @@ public class JobApplicationService
 
     public async Task<JobApplicationResponse?> Update(Guid id, JobApplicationRequest request, CancellationToken cancellationToken)
     {
+        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
+
         var existingApplication = await _ambioDbContext.JobApplications
             .FindAsync([id], cancellationToken: cancellationToken);
 
@@ -73,10 +86,5 @@ public class JobApplicationService
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
         return true;
-    }
-
-    public async Task<ValidationResult> Validate(JobApplicationRequest jobApplicationRequest)
-    {
-        return await _validator.ValidateAsync(jobApplicationRequest);
     }
 }

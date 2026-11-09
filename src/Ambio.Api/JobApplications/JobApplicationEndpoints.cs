@@ -1,5 +1,8 @@
 using Ambio.Application.JobApplications;
 
+using FluentValidation;
+using FluentValidation.Results;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Ambio.Api.JobApplications;
@@ -45,16 +48,16 @@ public static class JobApplicationEndpoints
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
     {
-        var validationResult = await jobApplicationService.Validate(jobApplicationRequest);
-
-        if (!validationResult.IsValid)
+        try
         {
-            return TypedResults.ValidationProblem(validationResult.ToDictionary());
+            var jobApplication = await jobApplicationService.Create(jobApplicationRequest, cancellationToken);
+
+            return TypedResults.Created($"{Prefix}/{jobApplication.Id}", jobApplication);
         }
-
-        var jobApplication = await jobApplicationService.Create(jobApplicationRequest, cancellationToken);
-
-        return TypedResults.Created($"{Prefix}/{jobApplication.Id}", jobApplication);
+        catch (ValidationException ex)
+        {
+            return TypedResults.ValidationProblem(new ValidationResult(ex.Errors).ToDictionary());
+        }
     }
 
     private static async Task<Results<NotFound, ValidationProblem, Ok<JobApplicationResponse>>> UpdateHandler(
@@ -63,18 +66,18 @@ public static class JobApplicationEndpoints
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
     {
-        var validationResult = await jobApplicationService.Validate(jobApplicationRequest);
-
-        if (!validationResult.IsValid)
+        try
         {
-            return TypedResults.ValidationProblem(validationResult.ToDictionary());
+            var existingApplication = await jobApplicationService.Update(id, jobApplicationRequest, cancellationToken);
+
+            return existingApplication is null
+                ? TypedResults.NotFound()
+                : TypedResults.Ok(existingApplication);
         }
-
-        var existingApplication = await jobApplicationService.Update(id, jobApplicationRequest, cancellationToken);
-
-        return existingApplication is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(existingApplication);
+        catch (ValidationException ex)
+        {
+            return TypedResults.ValidationProblem(new ValidationResult(ex.Errors).ToDictionary());
+        }
     }
 
     private static async Task<Results<NotFound, NoContent>> DeleteHandler(
