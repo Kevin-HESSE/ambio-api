@@ -9,6 +9,7 @@ public static class DataExtensions
 {
     public static void AddAmbioContext(this IServiceCollection services, string migrationAssembly, string? connectionString)
     {
+        services.AddSingleton(TimeProvider.System);
         services.AddSingleton<TimestampInterceptor>();
         services.AddDbContext<AmbioDbContext>((provider, options) =>
             {

@@ -6,8 +6,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddSingleton(TimeProvider.System);
-
 builder.Services.AddAmbioContext(
     migrationAssembly: "Ambio.Migrations",
     connectionString: builder.Configuration.GetConnectionString("DefaultConnection"));
