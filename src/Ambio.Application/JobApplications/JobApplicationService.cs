@@ -1,3 +1,4 @@
+using Ambio.Application.Abstractions.OperationResult;
 using Ambio.Data;
 using Ambio.Domain.JobApplications;
 
@@ -18,43 +19,48 @@ public class JobApplicationService
         _validator = validator;
     }
 
-    public async Task<List<JobApplicationResponse>> GetAll(CancellationToken cancellationToken)
+    public async Task<ResultFor<List<JobApplicationResponse>>> GetAll(CancellationToken cancellationToken)
     {
-        return await _ambioDbContext.JobApplications
+        var jobApplications = await _ambioDbContext.JobApplications
             .Select(ja => ja.ToResponse())
             .ToListAsync(cancellationToken);
+
+        return ResultFor<List<JobApplicationResponse>>.Success(jobApplications);
     }
 
-    public async Task<JobApplicationResponse?> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<ResultFor<JobApplicationResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var jobApplication = await _ambioDbContext.JobApplications
             .FindAsync([id], cancellationToken: cancellationToken);
-        return jobApplication?.ToResponse();
+
+        return jobApplication is not null
+            ? ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse())
+            : ResultFor<JobApplicationResponse>.NotFound();
     }
 
-    public async Task<JobApplicationResponse> Create(JobApplicationRequest request, CancellationToken cancellationToken)
+    public async Task<ResultFor<JobApplicationResponse>> Create(JobApplicationRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
-            throw new ValidationException(validationResult.Errors);
+            return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
         }
 
         var jobApplication = request.ToEntity();
         await _ambioDbContext.JobApplications.AddAsync(jobApplication, cancellationToken);
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
-        return jobApplication.ToResponse();
+        return ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse());
     }
 
-    public async Task<JobApplicationResponse?> Update(Guid id, JobApplicationRequest request, CancellationToken cancellationToken)
+    public async Task<ResultFor<JobApplicationResponse>> Update(Guid id, JobApplicationRequest request, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
-            throw new ValidationException(validationResult.Errors);
+            return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
         }
 
         var existingApplication = await _ambioDbContext.JobApplications
@@ -63,7 +69,7 @@ public class JobApplicationService
 
         if (existingApplication is null)
         {
-            return null;
+            return ResultFor<JobApplicationResponse>.NotFound();
         }
 
         existingApplication.Title = request.Title;
@@ -74,19 +80,19 @@ public class JobApplicationService
 
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
-        return existingApplication.ToResponse();
+        return ResultFor<JobApplicationResponse>.Success(existingApplication.ToResponse());
     }
 
-    public async Task<bool> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<ResultFor<bool>> Delete(Guid id, CancellationToken cancellationToken)
     {
         var existingApplication = await _ambioDbContext.JobApplications
             .FindAsync([id], cancellationToken: cancellationToken);
 
-        if (existingApplication is null) return false;
+        if (existingApplication is null) return ResultFor<bool>.NotFound();
 
         _ambioDbContext.JobApplications.Remove(existingApplication);
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
-        return true;
+        return ResultFor<bool>.Success(true);
     }
 }
