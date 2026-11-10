@@ -9,7 +9,7 @@ namespace Ambio.Api.IntegrationTests.JobApplications;
 
 public abstract class BaseJobApplicationTests : BaseIntegrationTests
 {
-    protected readonly Faker<JobApplication> JobApplicationGenerator = new Faker<JobApplication>()
+    protected readonly Faker<OfferApplication> OfferApplicationGenerator = new Faker<OfferApplication>()
         .RuleFor(j => j.Title, f => f.Lorem.Word())
         .RuleFor(j => j.Company, f => f.Company.CompanyName())
         .RuleFor(j => j.Url, f => f.Internet.Url());
@@ -19,17 +19,17 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
     {
     }
 
-    protected async Task<JobApplication> CreateJobApplicationAsync()
+    protected async Task<OfferApplication> CreateJobApplicationAsync()
     {
-        var jobApplication = JobApplicationGenerator.Generate();
+        var jobApplication = OfferApplicationGenerator.Generate();
         DbContext.JobApplications.Add(jobApplication);
         await DbContext.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken);
         return jobApplication;
     }
 
-    protected async Task<List<JobApplication>> CreateJobApplicationsAsync(int count)
+    protected async Task<List<OfferApplication>> CreateJobApplicationsAsync(int count)
     {
-        var jobApplications = JobApplicationGenerator.Generate(count);
+        var jobApplications = OfferApplicationGenerator.Generate(count);
         DbContext.JobApplications.AddRange(jobApplications);
         await DbContext.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken);
         return jobApplications;
@@ -49,11 +49,12 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
             .SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
     }
 
-    protected static JobApplicationRequest GenerateJobApplicationRequest(JobApplication jobApplication, string? title = null)
+    protected static JobApplicationRequest GenerateJobApplicationRequest(OfferApplication jobApplication, string? title = null)
     {
         return new JobApplicationRequest(
             Title: title ?? jobApplication.Title,
             Company: jobApplication.Company,
+            Kind: "offer",
             Url: jobApplication.Url,
             Status: jobApplication.Status,
             AppliedAt: jobApplication.AppliedOn);

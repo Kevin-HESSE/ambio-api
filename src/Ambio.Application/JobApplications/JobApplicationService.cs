@@ -1,4 +1,5 @@
 using Ambio.Data;
+using Ambio.Domain.JobApplications;
 
 using FluentValidation;
 
@@ -57,7 +58,8 @@ public class JobApplicationService
         }
 
         var existingApplication = await _ambioDbContext.JobApplications
-            .FindAsync([id], cancellationToken: cancellationToken);
+            .OfType<OfferApplication>()
+            .SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         if (existingApplication is null)
         {

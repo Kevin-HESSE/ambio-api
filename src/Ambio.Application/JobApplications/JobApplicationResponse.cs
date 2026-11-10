@@ -4,7 +4,8 @@ public record JobApplicationResponse(
     Guid Id,
     string Title,
     string Company,
-    string Url,
+    string Kind,
+    string? Url,
     string Status,
     DateOnly? AppliedAt
     );

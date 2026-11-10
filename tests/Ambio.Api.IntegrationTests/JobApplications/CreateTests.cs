@@ -14,7 +14,7 @@ public class CreateTests : BaseJobApplicationTests
     [Fact]
     public async Task Create_WithValidPayload_ShouldReturnCreated()
     {
-        var jobApplicationRequest = GenerateJobApplicationRequest(JobApplicationGenerator.Generate());
+        var jobApplicationRequest = GenerateJobApplicationRequest(OfferApplicationGenerator.Generate());
 
         var response = await Client.PostAsJsonAsync(BaseUrl, jobApplicationRequest, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -32,7 +32,7 @@ public class CreateTests : BaseJobApplicationTests
     [Fact]
     public async Task Create_WithValidPayload_ShouldSetTimestamps()
     {
-        var jobApplicationRequest = GenerateJobApplicationRequest(JobApplicationGenerator.Generate());
+        var jobApplicationRequest = GenerateJobApplicationRequest(OfferApplicationGenerator.Generate());
 
         var response = await Client.PostAsJsonAsync(BaseUrl, jobApplicationRequest, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);

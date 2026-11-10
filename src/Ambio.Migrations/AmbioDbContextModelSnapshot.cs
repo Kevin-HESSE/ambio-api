@@ -32,6 +32,10 @@ namespace Ambio.Migrations
                         .HasColumnType("date")
                         .HasColumnName("applied_on");
 
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("archived_at");
+
                     b.Property<string>("Company")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -57,16 +61,44 @@ namespace Ambio.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.Property<string>("Url")
+                    b.Property<string>("kind")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("url");
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)")
+                        .HasColumnName("kind");
 
                     b.HasKey("Id")
                         .HasName("pk_job_applications");
 
                     b.ToTable("job_applications", (string)null);
+
+                    b.HasDiscriminator<string>("kind").HasValue("JobApplication");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("Ambio.Domain.JobApplications.OfferApplication", b =>
+                {
+                    b.HasBaseType("Ambio.Domain.JobApplications.JobApplication");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("url");
+
+                    b.ToTable("job_applications", (string)null);
+
+                    b.HasDiscriminator().HasValue("Offer");
+                });
+
+            modelBuilder.Entity("Ambio.Domain.JobApplications.SpontaneousApplication", b =>
+                {
+                    b.HasBaseType("Ambio.Domain.JobApplications.JobApplication");
+
+                    b.ToTable("job_applications", (string)null);
+
+                    b.HasDiscriminator().HasValue("Spontaneous");
                 });
 #pragma warning restore 612, 618
         }
