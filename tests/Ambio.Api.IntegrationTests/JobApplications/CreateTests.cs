@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 
+using Ambio.Api.IntegrationTests.Fixtures;
 using Ambio.Application.JobApplications;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
@@ -14,7 +15,7 @@ public class CreateTests : BaseJobApplicationTests
     [Fact]
     public async Task Create_WithValidPayload_ShouldReturnCreated()
     {
-        var jobApplicationRequest = GenerateJobApplicationRequest(OfferApplicationGenerator.Generate());
+        var jobApplicationRequest = GenerateJobApplicationRequest(FixturesFor.JobApplication.GetOffer());
 
         var response = await Client.PostAsJsonAsync(BaseUrl, jobApplicationRequest, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -32,7 +33,7 @@ public class CreateTests : BaseJobApplicationTests
     [Fact]
     public async Task Create_WithValidPayload_ShouldSetTimestamps()
     {
-        var jobApplicationRequest = GenerateJobApplicationRequest(OfferApplicationGenerator.Generate());
+        var jobApplicationRequest = GenerateJobApplicationRequest(FixturesFor.JobApplication.GetOffer());
 
         var response = await Client.PostAsJsonAsync(BaseUrl, jobApplicationRequest, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);

@@ -13,7 +13,7 @@ public class GetByIdTests : BaseJobApplicationTests
     [Fact]
     public async Task GetById_WhenJobApplicationExists_ShouldReturnOk()
     {
-        var jobApplication = await CreateJobApplicationAsync();
+        var jobApplication = await CreateOfferApplicationAsync();
 
         var response = await Client.GetAsync($"{BaseUrl}/{jobApplication.Id}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

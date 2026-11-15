@@ -1,7 +1,6 @@
+using Ambio.Api.IntegrationTests.Fixtures;
 using Ambio.Application.JobApplications;
 using Ambio.Domain.JobApplications;
-
-using Bogus;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -9,27 +8,34 @@ namespace Ambio.Api.IntegrationTests.JobApplications;
 
 public abstract class BaseJobApplicationTests : BaseIntegrationTests
 {
-    protected readonly Faker<OfferApplication> OfferApplicationGenerator = new Faker<OfferApplication>()
-        .RuleFor(j => j.Title, f => f.Lorem.Word())
-        .RuleFor(j => j.Company, f => f.Company.CompanyName())
-        .RuleFor(j => j.Url, f => f.Internet.Url());
-
     protected const string BaseUrl = "/job-applications";
+
     protected BaseJobApplicationTests(AmbioApiFactory factory) : base(factory)
     {
     }
 
-    protected async Task<OfferApplication> CreateJobApplicationAsync()
+
+    protected async Task<OfferApplication> CreateOfferApplicationAsync()
     {
-        var jobApplication = OfferApplicationGenerator.Generate();
+        var jobApplication = FixturesFor.JobApplication.GetOffer();
+        return await RegisterJobApplicationInDatabaseAsync(jobApplication);
+    }
+
+    // protected async Task<List<JobApplication>> CreateJobApplicationsAsync(int count)
+    // {
+    //     var jobApplications = FixturesFor.JobApplication.GetOffer(count);
+    //     return await RegisterJobApplicationsInDatabaseAsync(jobApplications);
+    // }
+
+    protected async Task<OfferApplication> RegisterJobApplicationInDatabaseAsync(OfferApplication jobApplication)
+    {
         DbContext.JobApplications.Add(jobApplication);
         await DbContext.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken);
         return jobApplication;
     }
 
-    protected async Task<List<OfferApplication>> CreateJobApplicationsAsync(int count)
+    protected async Task<List<JobApplication>> RegisterJobApplicationsInDatabaseAsync(List<JobApplication> jobApplications)
     {
-        var jobApplications = OfferApplicationGenerator.Generate(count);
         DbContext.JobApplications.AddRange(jobApplications);
         await DbContext.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken);
         return jobApplications;
@@ -37,19 +43,22 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
 
     protected async Task AssertNumberOfJobApplicationsInDatabaseAsync(int count)
     {
-        var numberOfJobApplications = await VerificationDbContext.JobApplications
+        var numberOfJobApplications = await VerificationDbContext
+            .JobApplications
             .CountAsync(TestContext.Current.CancellationToken);
         Assert.Equal(count, numberOfJobApplications);
     }
 
     protected Task<JobApplication> GetPersistedJobApplicationAsync(Guid id)
     {
-        return VerificationDbContext.JobApplications
+        return VerificationDbContext
+            .JobApplications
             .AsNoTracking()
             .SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
     }
 
-    protected static JobApplicationRequest GenerateJobApplicationRequest(OfferApplication jobApplication, string? title = null)
+    protected static JobApplicationRequest GenerateJobApplicationRequest(OfferApplication jobApplication,
+        string? title = null)
     {
         return new JobApplicationRequest(
             Title: title ?? jobApplication.Title,

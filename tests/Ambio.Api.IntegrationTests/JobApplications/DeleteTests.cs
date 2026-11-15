@@ -11,7 +11,7 @@ public class DeleteTests : BaseJobApplicationTests
     [Fact]
     public async Task Delete_WhenJobApplicationExists_ShouldReturnNoContent()
     {
-        var jobApplication = await CreateJobApplicationAsync();
+        var jobApplication = await CreateOfferApplicationAsync();
 
         var response = await Client.DeleteAsync($"{BaseUrl}/{jobApplication.Id}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);

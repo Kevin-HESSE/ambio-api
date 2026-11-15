@@ -14,7 +14,7 @@ public class UpdateTests : BaseJobApplicationTests
     [Fact]
     public async Task Update_WhenJobApplicationExists_ShouldReturnOk()
     {
-        var jobApplication = await CreateJobApplicationAsync();
+        var jobApplication = await CreateOfferApplicationAsync();
 
         var jobApplicationRequest = GenerateJobApplicationRequest(jobApplication, "Updated Title");
 
@@ -33,7 +33,7 @@ public class UpdateTests : BaseJobApplicationTests
     [Fact]
     public async Task Update_WhenJobApplicationDoesNotExist_ShouldReturnNotFound()
     {
-        var jobApplication = await CreateJobApplicationAsync();
+        var jobApplication = await CreateOfferApplicationAsync();
 
         var fakeGuid = Guid.CreateVersion7();
         var response = await Client.PutAsJsonAsync($"{BaseUrl}/{fakeGuid}", jobApplication, TestContext.Current.CancellationToken);
@@ -43,7 +43,7 @@ public class UpdateTests : BaseJobApplicationTests
     [Fact]
     public async Task Update_WhenJobApplicationExists_ShouldUpdateTimestamps()
     {
-        var jobApplication = await CreateJobApplicationAsync();
+        var jobApplication = await CreateOfferApplicationAsync();
         var expectedCreatedAt = FakeTimeProvider.GetUtcNow().UtcDateTime;
         FakeTimeProvider.Advance(TimeSpan.FromDays(1));
         var expectedUpdatedAt = FakeTimeProvider.GetUtcNow().UtcDateTime;

@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using Ambio.Data;
 
@@ -19,6 +21,11 @@ public abstract class BaseIntegrationTests : IAsyncLifetime
     protected AmbioDbContext VerificationDbContext { get; private set; } = null!;
     protected FakeTimeProvider FakeTimeProvider => _factory.FakeTimeProvider;
 
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     protected BaseIntegrationTests(AmbioApiFactory factory)
     {
         _factory = factory;
@@ -27,8 +34,6 @@ public abstract class BaseIntegrationTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
-
         _testScope = _factory.Services.CreateAsyncScope();
         DbContext = _testScope.ServiceProvider.GetRequiredService<AmbioDbContext>();
 
@@ -38,13 +43,14 @@ public abstract class BaseIntegrationTests : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
+        await _factory.ResetDatabaseAsync();
         await _testScope.DisposeAsync();
         await _verificationScope.DisposeAsync();
     }
 
     protected static async Task<T> ReadContentAsync<T>(HttpResponseMessage response)
     {
-        var content = await response.Content.ReadFromJsonAsync<T>(TestContext.Current.CancellationToken);
+        var content = await response.Content.ReadFromJsonAsync<T>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(content);
         return content;
     }
