@@ -20,8 +20,9 @@ public static class JobApplicationExtensions
         Company: application.Company,
         Kind: nameof(ApplicationKind.Offer),
         Url: application.Url,
-        Status: application.Status.ToLabel(),
-        AppliedAt: application.AppliedOn
+        Status: application.Status,
+        AppliedAt: application.AppliedOn,
+        ArchivedAt: application.ArchivedAt
     );
 
     private static JobApplicationResponse ToResponse(this SpontaneousApplication application) => new(
@@ -30,8 +31,9 @@ public static class JobApplicationExtensions
         Company: application.Company,
         Kind: nameof(ApplicationKind.Spontaneous),
         Url: null,
-        Status: application.Status.ToLabel(),
-        AppliedAt: application.AppliedOn
+        Status: application.Status,
+        AppliedAt: application.AppliedOn,
+        ArchivedAt: application.ArchivedAt
     );
 
     extension(JobApplicationRequest request)

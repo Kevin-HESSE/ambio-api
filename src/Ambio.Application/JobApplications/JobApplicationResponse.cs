@@ -1,3 +1,5 @@
+using Ambio.Domain.JobApplications;
+
 namespace Ambio.Application.JobApplications;
 
 public record JobApplicationResponse(
@@ -6,6 +8,7 @@ public record JobApplicationResponse(
     string Company,
     string Kind,
     string? Url,
-    string Status,
-    DateOnly? AppliedAt
+    ApplicationStatus Status,
+    DateOnly? AppliedAt,
+    DateTime? ArchivedAt
     );

@@ -11,17 +11,68 @@ namespace Ambio.Application.JobApplications;
 public class JobApplicationService
 {
     private readonly AmbioDbContext _ambioDbContext;
-    private readonly IValidator<JobApplicationRequest> _validator;
+    private readonly IValidator<JobApplicationRequest> _requestValidator;
+    private readonly IValidator<IJobApplicationFilter> _filterValidator;
 
-    public JobApplicationService(AmbioDbContext ambioDbContext, IValidator<JobApplicationRequest> validator)
+    public JobApplicationService(
+        AmbioDbContext ambioDbContext,
+        IValidator<JobApplicationRequest> requestValidator,
+        IValidator<IJobApplicationFilter> filterValidator)
     {
         _ambioDbContext = ambioDbContext;
-        _validator = validator;
+        _requestValidator = requestValidator;
+        _filterValidator = filterValidator;
     }
 
-    public async Task<ResultFor<List<JobApplicationResponse>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ResultFor<List<JobApplicationResponse>>> GetAll(
+        IJobApplicationFilter filter,
+        CancellationToken cancellationToken)
     {
-        var jobApplications = await _ambioDbContext.JobApplications
+        var validationResult = await _filterValidator.ValidateAsync(filter, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return ResultFor<List<JobApplicationResponse>>.NotValid(validationResult.Errors);
+        }
+
+        var page = filter.Page ?? 1;
+        var itemsPerPage = filter.ItemsPerPage ?? 10;
+
+        IQueryable<JobApplication> query = _ambioDbContext.JobApplications;
+
+        query = filter.Archived switch
+        {
+            ArchivedOption.Only => query.Where(ja => ja.ArchivedAt != null),
+            ArchivedOption.Include => query.Where(ja => ja.ArchivedAt == null || ja.ArchivedAt != null),
+            _ => query.Where(ja => ja.ArchivedAt == null)
+        };
+
+        if (filter.Company is not null)
+        {
+            query = query.Where(ja => ja.Company == filter.Company);
+        }
+
+        if (filter.Search is not null)
+        {
+            query = query.Where(ja => EF.Functions.ILike(ja.Title, $"%{filter.Search}%"));
+        }
+
+        query = filter.OrderByDate switch
+        {
+            OrderOption.Asc => query.OrderBy(ja => ja.CreatedAt),
+            _ => query.OrderByDescending(ja => ja.CreatedAt)
+        };
+
+        query = filter.OrderByName switch
+        {
+            OrderOption.Desc => query.OrderByDescending(ja => ja.Title),
+            OrderOption.Asc => query.OrderBy(ja => ja.Title),
+            _ => query
+        };
+
+        var jobApplications = await query
+            .Skip((page - 1) * itemsPerPage)
+            .Take(itemsPerPage)
             .Select(ja => ja.ToResponse())
             .ToListAsync(cancellationToken);
 
@@ -38,9 +89,10 @@ public class JobApplicationService
             : ResultFor<JobApplicationResponse>.NotFound();
     }
 
-    public async Task<ResultFor<JobApplicationResponse>> Create(JobApplicationRequest request, CancellationToken cancellationToken)
+    public async Task<ResultFor<JobApplicationResponse>> Create(JobApplicationRequest request,
+        CancellationToken cancellationToken)
     {
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
+        var validationResult = await _requestValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -54,9 +106,10 @@ public class JobApplicationService
         return ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse());
     }
 
-    public async Task<ResultFor<JobApplicationResponse>> Update(Guid id, JobApplicationRequest request, CancellationToken cancellationToken)
+    public async Task<ResultFor<JobApplicationResponse>> Update(Guid id, JobApplicationRequest request,
+        CancellationToken cancellationToken)
     {
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
+        var validationResult = await _requestValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {

@@ -20,13 +20,16 @@ public static class JobApplicationEndpoints
         baseEndpoint.MapDelete("/{id:guid}", DeleteHandler);
     }
 
-    private static async Task<IResult> GetCollectionHandler(
+    private static async Task<Results<Ok<List<JobApplicationResponse>>, ValidationProblem>> GetCollectionHandler(
+        [AsParameters] JobApplicationQuery filter,
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
     {
-        var result = await jobApplicationService.GetAll(cancellationToken);
+        var result = await jobApplicationService.GetAll(filter, cancellationToken);
 
-        return TypedResults.Ok(result.Value);
+        return result.Match(
+            onSuccess: jobApplications => TypedResults.Ok(jobApplications),
+            onError: errors => TypedResults.ValidationProblem(errors));
     }
 
     private static async Task<Results<Ok<JobApplicationResponse>, NotFound>> GetHandler(

@@ -1,18 +1,22 @@
-@Ambio.Api_HostAddress = http://localhost:5262
+@Ambio = http://localhost:5262
 # Replace with an id returned by the POST request
 @id = 00000000-0000-0000-0000-000000000000
 
 ### List all job applications
-GET {{Ambio.Api_HostAddress}}/job-applications
+GET {{Ambio}}/job-applications
+Accept: application/json
+
+### List all job applications
+GET {{Ambio}}/job-applications?status=Applied
 Accept: application/json
 
 ### Get a job application by id
-GET {{Ambio.Api_HostAddress}}/job-applications/{{id}}
+GET {{Ambio}}/job-applications/{{id}}
 Accept: application/json
 
 ### Create a job application
 # status: 0 Draft, 1 Applied, 2 Interview, 3 Offer, 4 Rejected, 5 Withdrawn
-POST {{Ambio.Api_HostAddress}}/job-applications
+POST {{Ambio}}/job-applications
 Content-Type: application/json
 
 {
@@ -24,7 +28,7 @@ Content-Type: application/json
 }
 
 ### Update a job application
-PUT {{Ambio.Api_HostAddress}}/job-applications/{{id}}
+PUT {{Ambio}}/job-applications/{{id}}
 Content-Type: application/json
 
 {
@@ -36,4 +40,4 @@ Content-Type: application/json
 }
 
 ### Delete a job application
-DELETE {{Ambio.Api_HostAddress}}/job-applications/{{id}}
+DELETE {{Ambio}}/job-applications/{{id}}
