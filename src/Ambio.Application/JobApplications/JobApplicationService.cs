@@ -1,3 +1,4 @@
+using Ambio.Application.Abstractions;
 using Ambio.Application.Abstractions.OperationResult;
 using Ambio.Data;
 using Ambio.Domain.JobApplications;
@@ -24,7 +25,7 @@ public class JobApplicationService
         _filterValidator = filterValidator;
     }
 
-    public async Task<ResultFor<List<JobApplicationResponse>>> GetAll(
+    public async Task<ResultFor<CollectionResponse<JobApplicationResponse>>> GetAll(
         IJobApplicationFilter filter,
         CancellationToken cancellationToken)
     {
@@ -32,13 +33,14 @@ public class JobApplicationService
 
         if (!validationResult.IsValid)
         {
-            return ResultFor<List<JobApplicationResponse>>.NotValid(validationResult.Errors);
+            return ResultFor<CollectionResponse<JobApplicationResponse>>.NotValid(validationResult.Errors);
         }
 
         var page = filter.Page ?? 1;
         var itemsPerPage = filter.ItemsPerPage ?? 10;
 
-        IQueryable<JobApplication> query = _ambioDbContext.JobApplications;
+        IQueryable<JobApplication> query = _ambioDbContext.JobApplications
+            .AsNoTracking();
 
         query = filter.Archived switch
         {
@@ -70,13 +72,25 @@ public class JobApplicationService
             _ => query
         };
 
+        var totalJobApplication = await query.CountAsync(cancellationToken);
+
+        var lastPage = Math.Max(1, (int)Math.Ceiling(totalJobApplication / (double)itemsPerPage));
+        var effectivePage = Math.Clamp(page, 1, lastPage);
+
         var jobApplications = await query
-            .Skip((page - 1) * itemsPerPage)
+            .Skip((effectivePage - 1) * itemsPerPage)
             .Take(itemsPerPage)
             .Select(ja => ja.ToResponse())
             .ToListAsync(cancellationToken);
 
-        return ResultFor<List<JobApplicationResponse>>.Success(jobApplications);
+        var result = new CollectionResponse<JobApplicationResponse>(
+            Items: jobApplications,
+            Total: totalJobApplication,
+            ItemsPerPage: itemsPerPage,
+            CurrentPage: effectivePage,
+            MaxPage: lastPage);
+
+        return ResultFor<CollectionResponse<JobApplicationResponse>>.Success(result);
     }
 
     public async Task<ResultFor<JobApplicationResponse>> GetById(Guid id, CancellationToken cancellationToken)

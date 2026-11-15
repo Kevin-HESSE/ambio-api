@@ -20,15 +20,29 @@ public static class JobApplicationEndpoints
         baseEndpoint.MapDelete("/{id:guid}", DeleteHandler);
     }
 
-    private static async Task<Results<Ok<List<JobApplicationResponse>>, ValidationProblem>> GetCollectionHandler(
-        [AsParameters] JobApplicationQuery filter,
-        JobApplicationService jobApplicationService,
-        CancellationToken cancellationToken)
+    private static async Task<Results<Ok<PaginationResponse<JobApplicationResponse>>, ValidationProblem>>
+        GetCollectionHandler(
+            [AsParameters] JobApplicationQuery filter,
+            HttpRequest httpRequest,
+            JobApplicationService jobApplicationService,
+            CancellationToken cancellationToken)
     {
         var result = await jobApplicationService.GetAll(filter, cancellationToken);
 
         return result.Match(
-            onSuccess: jobApplications => TypedResults.Ok(jobApplications),
+            onSuccess: (collectionResponse) =>
+            {
+                var meta = PaginationMetaFactory.Create(
+                    request: httpRequest,
+                    currentPage: collectionResponse.CurrentPage,
+                    lastPage: collectionResponse.MaxPage,
+                    itemsPerPage: collectionResponse.ItemsPerPage,
+                    totalItems: collectionResponse.Total);
+
+                var response = new PaginationResponse<JobApplicationResponse>(collectionResponse.Items, meta);
+
+                return TypedResults.Ok(response);
+            },
             onError: errors => TypedResults.ValidationProblem(errors));
     }
 
