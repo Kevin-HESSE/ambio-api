@@ -11,9 +11,10 @@ public static class FixturesFor
 
     public static class JobApplication
     {
-        public static SpontaneousApplication GetSpontaneous(bool archived = false, ApplicationStatus? status = null)
+        public static SpontaneousApplication GetSpontaneous(bool archived = false, string? title = null,
+            string? company = null, ApplicationStatus? status = null)
         {
-            Faker<SpontaneousApplication> faker = ApplySpontaneousRules(status);
+            Faker<SpontaneousApplication> faker = ApplySpontaneousRules(title, company, status);
 
             return archived
                 ? faker.Generate(IsArchivedRuleSet)
@@ -21,18 +22,21 @@ public static class FixturesFor
         }
 
         public static List<SpontaneousApplication> GetSpontaneous(int count, bool archived = false,
+            string? title = null,
+            string? company = null,
             ApplicationStatus? status = null)
         {
-            Faker<SpontaneousApplication> faker = ApplySpontaneousRules(status);
+            Faker<SpontaneousApplication> faker = ApplySpontaneousRules(title, company, status);
 
             return archived
                 ? faker.Generate(count, IsArchivedRuleSet)
                 : faker.Generate(count);
         }
 
-        public static OfferApplication GetOffer(bool archived = false, ApplicationStatus? status = null)
+        public static OfferApplication GetOffer(bool archived = false, string? title = null,
+            string? company = null, ApplicationStatus? status = null)
         {
-            Faker<OfferApplication> faker = ApplyOfferRules(status);
+            Faker<OfferApplication> faker = ApplyOfferRules(title, company, status);
 
             return archived
                 ? faker.Generate(IsArchivedRuleSet)
@@ -40,20 +44,22 @@ public static class FixturesFor
         }
 
         public static List<OfferApplication> GetOffer(int count, bool archived = false,
+            string? title = null,
+            string? company = null,
             ApplicationStatus? status = null)
         {
-            Faker<OfferApplication> faker = ApplyOfferRules(status);
+            Faker<OfferApplication> faker = ApplyOfferRules(title, company, status);
 
             return archived
                 ? faker.Generate(count, IsArchivedRuleSet)
                 : faker.Generate(count);
         }
 
-        private static Faker<SpontaneousApplication> ApplySpontaneousRules(ApplicationStatus? status)
+        private static Faker<SpontaneousApplication> ApplySpontaneousRules(string? title, string? company, ApplicationStatus? status)
         {
             var faker = new Faker<SpontaneousApplication>()
-                .RuleFor(j => j.Title, f => f.Name.JobTitle())
-                .RuleFor(j => j.Company, f => f.Company.CompanyName())
+                .RuleFor(j => j.Title, f => title ?? f.Name.JobTitle())
+                .RuleFor(j => j.Company, f => company ?? f.Company.CompanyName())
                 .RuleFor(j => j.Status, f => status ?? f.PickRandom<ApplicationStatus>())
                 .RuleFor(j => j.AppliedOn, (f) => f.Date.PastDateOnly())
                 .RuleSet(IsArchived, set =>
@@ -63,11 +69,11 @@ public static class FixturesFor
             return faker;
         }
 
-        private static Faker<OfferApplication> ApplyOfferRules(ApplicationStatus? status)
+        private static Faker<OfferApplication> ApplyOfferRules(string? title, string? company, ApplicationStatus? status)
         {
             var faker = new Faker<OfferApplication>()
-                .RuleFor(j => j.Title, f => f.Name.JobTitle())
-                .RuleFor(j => j.Company, f => f.Company.CompanyName())
+                .RuleFor(j => j.Title, f => title ?? f.Name.JobTitle())
+                .RuleFor(j => j.Company, f => company ?? f.Company.CompanyName())
                 .RuleFor(j => j.Url, f => f.Internet.Url())
                 .RuleFor(j => j.Status, f => status ?? f.PickRandom<ApplicationStatus>())
                 .RuleFor(j => j.AppliedOn, (f) => f.Date.PastDateOnly())

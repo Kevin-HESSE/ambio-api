@@ -13,7 +13,7 @@ namespace Ambio.Api.IntegrationTests.JobApplications;
 
 public class GetAllTests : BaseJobApplicationTests
 {
-    // SetUpFixturesAsync registers 100 non-archived and 60 archived job applications
+    // Without arguments, SetUpFixturesAsync registers 100 non-archived and 60 archived job applications
     private const int NonArchivedCount = 100;
     private const int ArchivedCount = 60;
     private const int DefaultItemsPerPage = 10;
@@ -133,14 +133,8 @@ public class GetAllTests : BaseJobApplicationTests
         await SetUpFixturesAsync();
 
         const string company = "Ambio Pagination Company";
-        var companyApplications = FixturesFor.JobApplication.GetOffer(count: 12)
-            .Select(ja =>
-            {
-                ja.Company = company;
-                return (JobApplication)ja;
-            })
-            .ToList();
-        await RegisterJobApplicationsInDatabaseAsync(companyApplications);
+        await RegisterJobApplicationsInDatabaseAsync(
+            [..FixturesFor.JobApplication.GetOffer(count: 12, company: company)]);
 
         var url = $"{BaseUrl}?company={Uri.EscapeDataString(company)}&order[date]=Asc&itemsPerPage=5&page=2";
         var response = await Client.GetAsync(url, TestContext.Current.CancellationToken);
@@ -200,10 +194,10 @@ public class GetAllTests : BaseJobApplicationTests
     [Fact]
     public async Task GetAll_WhenSearchProvided_ShouldMatchTitlePartiallyIgnoringCase()
     {
-        await RegisterBatchAsync(
-            Offer(title: "Senior PHP Developer"),
-            Offer(title: "php engineer"),
-            Offer(title: "Java Developer"));
+        await SetUpFixturesAsync(
+            FixturesFor.JobApplication.GetOffer(title: "Senior PHP Developer"),
+            FixturesFor.JobApplication.GetOffer(title: "php engineer"),
+            FixturesFor.JobApplication.GetOffer(title: "Java Developer"));
 
         var content = await GetCollectionAsync("?search=PhP");
 
@@ -214,9 +208,9 @@ public class GetAllTests : BaseJobApplicationTests
     [Fact]
     public async Task GetAll_WhenSearchContainsWildcard_ShouldMatchItLiterally()
     {
-        await RegisterBatchAsync(
-            Offer(title: "100% remote"),
-            Offer(title: "Backend developer"));
+        await SetUpFixturesAsync(
+            FixturesFor.JobApplication.GetOffer(title: "100% remote"),
+            FixturesFor.JobApplication.GetOffer(title: "Backend developer"));
 
         var content = await GetCollectionAsync($"?search={Uri.EscapeDataString("%")}");
 
@@ -227,10 +221,10 @@ public class GetAllTests : BaseJobApplicationTests
     [Fact]
     public async Task GetAll_WhenCompanyProvided_ShouldMatchExactlyIgnoringCase()
     {
-        await RegisterBatchAsync(
-            Offer(company: "Acme"),
-            Offer(company: "ACME"),
-            Offer(company: "Acme Corp"));
+        await SetUpFixturesAsync(
+            FixturesFor.JobApplication.GetOffer(company: "Acme"),
+            FixturesFor.JobApplication.GetOffer(company: "ACME"),
+            FixturesFor.JobApplication.GetOffer(company: "Acme Corp"));
 
         var content = await GetCollectionAsync("?company=acme");
 
@@ -286,7 +280,7 @@ public class GetAllTests : BaseJobApplicationTests
     [Fact]
     public async Task GetAll_WhenStatusRepeated_ShouldKeepAllValuesInLinks()
     {
-        await RegisterBatchAsync(
+        await SetUpFixturesAsync(
         [
             ..FixturesFor.JobApplication.GetOffer(count: 6, status: ApplicationStatus.Sent),
             ..FixturesFor.JobApplication.GetOffer(count: 6, status: ApplicationStatus.Interview),
@@ -306,11 +300,12 @@ public class GetAllTests : BaseJobApplicationTests
     [Fact]
     public async Task GetAll_WhenFiltersCombined_ShouldApplyAllOfThem()
     {
-        await RegisterBatchAsync(
-            Offer(title: "Expected", company: "Acme", status: ApplicationStatus.Offer, archived: true),
-            Offer(company: "Acme", status: ApplicationStatus.Offer),
-            Offer(company: "Acme", status: ApplicationStatus.Sent, archived: true),
-            Offer(company: "Globex", status: ApplicationStatus.Offer, archived: true));
+        await SetUpFixturesAsync(
+            FixturesFor.JobApplication.GetOffer(title: "Expected", company: "Acme", status: ApplicationStatus.Offer,
+                archived: true),
+            FixturesFor.JobApplication.GetOffer(company: "Acme", status: ApplicationStatus.Offer),
+            FixturesFor.JobApplication.GetOffer(company: "Acme", status: ApplicationStatus.Sent, archived: true),
+            FixturesFor.JobApplication.GetOffer(company: "Globex", status: ApplicationStatus.Offer, archived: true));
 
         var content = await GetCollectionAsync("?company=acme&status=offer&archived=only");
 
@@ -321,9 +316,9 @@ public class GetAllTests : BaseJobApplicationTests
     [Fact]
     public async Task GetAll_WhenNoOrderProvided_ShouldSortByMostRecentFirst()
     {
-        await RegisterBatchAsync(Offer(title: "A"));
-        await RegisterBatchAsync(Offer(title: "B"));
-        await RegisterBatchAsync(Offer(title: "C"));
+        await SetUpFixturesAsync(FixturesFor.JobApplication.GetOffer(title: "A"));
+        await SetUpFixturesAsync(FixturesFor.JobApplication.GetOffer(title: "B"));
+        await SetUpFixturesAsync(FixturesFor.JobApplication.GetOffer(title: "C"));
 
         var content = await GetCollectionAsync(string.Empty);
 
@@ -333,9 +328,9 @@ public class GetAllTests : BaseJobApplicationTests
     [Fact]
     public async Task GetAll_WhenOrderByDateAsc_ShouldSortByOldestFirst()
     {
-        await RegisterBatchAsync(Offer(title: "A"));
-        await RegisterBatchAsync(Offer(title: "B"));
-        await RegisterBatchAsync(Offer(title: "C"));
+        await SetUpFixturesAsync(FixturesFor.JobApplication.GetOffer(title: "A"));
+        await SetUpFixturesAsync(FixturesFor.JobApplication.GetOffer(title: "B"));
+        await SetUpFixturesAsync(FixturesFor.JobApplication.GetOffer(title: "C"));
 
         var content = await GetCollectionAsync("?order[date]=asc");
 
@@ -348,7 +343,10 @@ public class GetAllTests : BaseJobApplicationTests
     public async Task GetAll_WhenOrderByTitleProvided_ShouldSortByTitle(string order, string[] expectedTitles)
     {
         // Same batch: same creation date, so only the title decides
-        await RegisterBatchAsync(Offer(title: "B"), Offer(title: "A"), Offer(title: "C"));
+        await SetUpFixturesAsync(
+            FixturesFor.JobApplication.GetOffer(title: "B"),
+            FixturesFor.JobApplication.GetOffer(title: "A"),
+            FixturesFor.JobApplication.GetOffer(title: "C"));
 
         var content = await GetCollectionAsync($"?order[title]={order}");
 
@@ -358,8 +356,8 @@ public class GetAllTests : BaseJobApplicationTests
     [Fact]
     public async Task GetAll_WhenBothOrdersProvided_ShouldSortByDateFirst()
     {
-        await RegisterBatchAsync(Offer(title: "A"));
-        await RegisterBatchAsync(Offer(title: "Z"));
+        await SetUpFixturesAsync(FixturesFor.JobApplication.GetOffer(title: "A"));
+        await SetUpFixturesAsync(FixturesFor.JobApplication.GetOffer(title: "Z"));
 
         var content = await GetCollectionAsync("?order[title]=asc");
 
@@ -427,7 +425,7 @@ public class GetAllTests : BaseJobApplicationTests
     [Fact]
     public async Task GetAll_ShouldSerializeFieldsAsDefinedInConception()
     {
-        await RegisterBatchAsync(Offer(status: ApplicationStatus.Interview));
+        await SetUpFixturesAsync(FixturesFor.JobApplication.GetOffer(status: ApplicationStatus.Interview));
 
         var response = await Client.GetAsync(BaseUrl, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -451,28 +449,11 @@ public class GetAllTests : BaseJobApplicationTests
         return await ReadContentAsync<PaginationResponse<JobApplicationResponse>>(response);
     }
 
-    // TimestampInterceptor stamps every entity of a SaveChanges with the same CreatedAt,
-    // so the clock moves forward after each batch to give the next one a later date
-    private async Task RegisterBatchAsync(params JobApplication[] jobApplications)
-    {
-        await RegisterJobApplicationsInDatabaseAsync([..jobApplications]);
-        FakeTimeProvider.Advance(TimeSpan.FromMinutes(1));
-    }
-
     private async Task RegisterOneApplicationPerStatusAsync()
     {
-        await RegisterBatchAsync(Enum.GetValues<ApplicationStatus>()
-            .Select(status => (JobApplication)Offer(status: status))
+        await SetUpFixturesAsync(Enum.GetValues<ApplicationStatus>()
+            .Select(status => (JobApplication)FixturesFor.JobApplication.GetOffer(status: status))
             .ToArray());
-    }
-
-    private static OfferApplication Offer(string? title = null, string? company = null,
-        ApplicationStatus? status = null, bool archived = false)
-    {
-        var offer = FixturesFor.JobApplication.GetOffer(archived, status);
-        offer.Title = title ?? offer.Title;
-        offer.Company = company ?? offer.Company;
-        return offer;
     }
 
     private static void AssertLinkValues(string? link, string key, params string[] expectedValues)
@@ -511,6 +492,8 @@ public class GetAllTests : BaseJobApplicationTests
         }
     }
 
+    // TimestampInterceptor stamps every entity of a SaveChanges with the same CreatedAt,
+    // so the clock moves forward after each call to give the next batch a later date
     private async Task SetUpFixturesAsync()
     {
         List<JobApplication> jobApplications =
@@ -522,5 +505,12 @@ public class GetAllTests : BaseJobApplicationTests
         ];
 
         await RegisterJobApplicationsInDatabaseAsync(jobApplications);
+        FakeTimeProvider.Advance(TimeSpan.FromMinutes(1));
+    }
+
+    private async Task SetUpFixturesAsync(params JobApplication[] jobApplications)
+    {
+        await RegisterJobApplicationsInDatabaseAsync([.. jobApplications]);
+        FakeTimeProvider.Advance(TimeSpan.FromMinutes(1));
     }
 }
