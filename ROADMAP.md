@@ -17,18 +17,23 @@ Status: **Done** · **Next** · **Planned** · **Later**
 
 ## Endpoint refinement — Next
 
-- [ ] Pagination on `GET /job-applications`, with a server-side maximum page size
-- [ ] String enums in the JSON contract, same value in requests and responses
-- [ ] Align `AppliedAt` / `AppliedOn` naming
+- [x] Pagination on `GET /job-applications`, with a server-side maximum page size
+- [x] Filters on `GET /job-applications`: repeatable `status`, `search`, `company`, `archived` (case-insensitive)
+- [x] Sorting on `GET /job-applications`: `order[date]`, `order[title]`
+- [x] Integration tests for filters, sorting and validation on `GET /job-applications`
+- [x] ProblemDetails for empty error responses
+- [ ] String enums in the JSON contract, same value in requests and responses (responses done, request bodies
+  still accept numbers)
+- [ ] Align `AppliedAt` / `AppliedOn` naming (responses done, request still uses `appliedAt`)
 - [ ] Validation aligned with database constraints (max lengths, `http`/`https` URLs only)
 - [ ] Longer URL column (2048)
-- [ ] Consistent error responses (ProblemDetails, exception handler)
-- [ ] Stable validation errors (fixed culture, camelCase keys)
+- [ ] Exception handler for unhandled errors
+- [ ] Stable validation errors (fixed culture, keys named after the request fields; done for collection filters)
 - [ ] CORS policy for the front-end, with explicit origins
 - [ ] Bind PostgreSQL to `127.0.0.1` in `docker-compose.yaml`
 - [ ] OpenAPI metadata (names, summaries, tags)
 - [ ] Integration tests for invalid payloads (`400` on create and update)
-- [ ] Typed result on `GET /job-applications` for the OpenAPI document
+- [x] Typed result on `GET /job-applications` for the OpenAPI document
 
 ## Layered architecture — Done
 
