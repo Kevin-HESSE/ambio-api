@@ -1,5 +1,6 @@
 using Ambio.Application.Abstractions;
 using Ambio.Application.Abstractions.OperationResult;
+using Ambio.Application.Filters;
 using Ambio.Data;
 using Ambio.Domain.JobApplications;
 
@@ -39,37 +40,50 @@ public class JobApplicationService
         var page = filter.Page ?? 1;
         var itemsPerPage = filter.ItemsPerPage ?? 10;
 
-        IQueryable<JobApplication> query = _ambioDbContext.JobApplications
+        var query = _ambioDbContext.JobApplications
             .AsNoTracking();
 
-        query = filter.Archived switch
+        query = EnumFilter.Parse<ArchivedOption>(filter.Archived) switch
         {
             ArchivedOption.Only => query.Where(ja => ja.ArchivedAt != null),
-            ArchivedOption.Include => query.Where(ja => ja.ArchivedAt == null || ja.ArchivedAt != null),
+            ArchivedOption.Included => query,
+            // Also covers a missing parameter: non-archived applications by default
             _ => query.Where(ja => ja.ArchivedAt == null)
         };
 
-        if (filter.Company is not null)
+        if (!string.IsNullOrWhiteSpace(filter.Company))
         {
-            query = query.Where(ja => ja.Company == filter.Company);
+            var company = EscapeLikePattern(filter.Company);
+            query = query.Where(ja => EF.Functions.ILike(ja.Company, company, LikeEscapeCharacter));
         }
 
-        if (filter.Search is not null)
+        if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            query = query.Where(ja => EF.Functions.ILike(ja.Title, $"%{filter.Search}%"));
+            var search = $"%{EscapeLikePattern(filter.Search)}%";
+            query = query.Where(ja => EF.Functions.ILike(ja.Title, search, LikeEscapeCharacter));
         }
 
-        query = filter.OrderByDate switch
+        var statuses = (filter.Status ?? [])
+            .Select(EnumFilter.Parse<ApplicationStatus>)
+            .OfType<ApplicationStatus>()
+            .ToList();
+
+        if (statuses.Count > 0)
+        {
+            query = query.Where(ja => statuses.Contains(ja.Status));
+        }
+
+        IOrderedQueryable<JobApplication> orderedQuery = EnumFilter.Parse<OrderOption>(filter.OrderByDate) switch
         {
             OrderOption.Asc => query.OrderBy(ja => ja.CreatedAt),
             _ => query.OrderByDescending(ja => ja.CreatedAt)
         };
 
-        query = filter.OrderByName switch
+        orderedQuery = EnumFilter.Parse<OrderOption>(filter.OrderByTitle) switch
         {
-            OrderOption.Desc => query.OrderByDescending(ja => ja.Title),
-            OrderOption.Asc => query.OrderBy(ja => ja.Title),
-            _ => query
+            OrderOption.Desc => orderedQuery.ThenByDescending(ja => ja.Title),
+            OrderOption.Asc => orderedQuery.ThenBy(ja => ja.Title),
+            _ => orderedQuery
         };
 
         var totalJobApplication = await query.CountAsync(cancellationToken);
@@ -77,7 +91,8 @@ public class JobApplicationService
         var lastPage = Math.Max(1, (int)Math.Ceiling(totalJobApplication / (double)itemsPerPage));
         var effectivePage = Math.Clamp(page, 1, lastPage);
 
-        var jobApplications = await query
+        var jobApplications = await orderedQuery
+            .ThenBy(ja => ja.Id)
             .Skip((effectivePage - 1) * itemsPerPage)
             .Take(itemsPerPage)
             .Select(ja => ja.ToResponse())
@@ -92,6 +107,12 @@ public class JobApplicationService
 
         return ResultFor<CollectionResponse<JobApplicationResponse>>.Success(result);
     }
+
+    // Npgsql emits ESCAPE '' when no escape character is given, so it has to be explicit
+    private const string LikeEscapeCharacter = @"\";
+
+    private static string EscapeLikePattern(string value) =>
+        value.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
 
     public async Task<ResultFor<JobApplicationResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {

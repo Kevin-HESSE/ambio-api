@@ -7,7 +7,7 @@ GET {{Ambio}}/job-applications
 Accept: application/json
 
 ### List all job applications
-GET {{Ambio}}/job-applications?status=Applied
+GET {{Ambio}}/job-applications?status=sent
 Accept: application/json
 
 ### Get a job application by id

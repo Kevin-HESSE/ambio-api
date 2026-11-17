@@ -4,5 +4,5 @@ public enum ArchivedOption
 {
     None,
     Only,
-    Include
+    Included
 }

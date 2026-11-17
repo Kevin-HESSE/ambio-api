@@ -1,7 +1,6 @@
 using System.ComponentModel;
 
 using Ambio.Application.JobApplications;
-using Ambio.Domain.JobApplications;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,19 +25,27 @@ public sealed record JobApplicationQuery : IJobApplicationFilter
     public string? Company { get; init; }
 
     /// <summary>
-    /// Filter by status
+    /// Filter by status, repeat the parameter for several values. Possible values: "sent", "interview", "offer",
+    /// "taken", "rejected" and "withdrawn"
     /// </summary>
-    public ApplicationStatus? Status { get; init; }
-
-    [property: DefaultValue(OrderOption.Desc), FromQuery(Name = "order[date]")]
-    public OrderOption? OrderByDate { get; init; }
-
-    [property: FromQuery(Name = "order[name]")]
-    public OrderOption? OrderByName { get; init; }
+    [property: FromQuery(Name = "status")]
+    public string[]? Status { get; init; }
 
     /// <summary>
-    /// Filter by archived status. Possible values: "none", "only" and "include"
+    /// Sort by creation date. Possible values: "asc" and "desc"
     /// </summary>
-    [property: DefaultValue(ArchivedOption.None), FromQuery(Name = "archived")]
-    public ArchivedOption? Archived { get; init; } = ArchivedOption.None;
+    [property: DefaultValue("desc"), FromQuery(Name = "order[date]")]
+    public string? OrderByDate { get; init; }
+
+    /// <summary>
+    /// Sort by title. Possible values: "asc" and "desc"
+    /// </summary>
+    [property: FromQuery(Name = "order[title]")]
+    public string? OrderByTitle { get; init; }
+
+    /// <summary>
+    /// Filter by archived status. Possible values: "none", "only" and "included"
+    /// </summary>
+    [property: DefaultValue("none"), FromQuery(Name = "archived")]
+    public string? Archived { get; init; }
 };

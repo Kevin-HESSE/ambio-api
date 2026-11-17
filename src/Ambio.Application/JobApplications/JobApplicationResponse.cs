@@ -8,7 +8,7 @@ public record JobApplicationResponse(
     string Company,
     string Kind,
     string? Url,
-    ApplicationStatus Status,
-    DateOnly? AppliedAt,
+    ApplicationStatus CurrentStatus,
+    DateOnly? AppliedOn,
     DateTime? ArchivedAt
     );

@@ -20,8 +20,8 @@ public static class JobApplicationExtensions
         Company: application.Company,
         Kind: nameof(ApplicationKind.Offer),
         Url: application.Url,
-        Status: application.Status,
-        AppliedAt: application.AppliedOn,
+        CurrentStatus: application.Status,
+        AppliedOn: application.AppliedOn,
         ArchivedAt: application.ArchivedAt
     );
 
@@ -31,8 +31,8 @@ public static class JobApplicationExtensions
         Company: application.Company,
         Kind: nameof(ApplicationKind.Spontaneous),
         Url: null,
-        Status: application.Status,
-        AppliedAt: application.AppliedOn,
+        CurrentStatus: application.Status,
+        AppliedOn: application.AppliedOn,
         ArchivedAt: application.ArchivedAt
     );
 
