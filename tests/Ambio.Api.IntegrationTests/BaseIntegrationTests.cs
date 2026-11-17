@@ -23,7 +23,7 @@ public abstract class BaseIntegrationTests : IAsyncLifetime
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
     protected BaseIntegrationTests(AmbioApiFactory factory)
