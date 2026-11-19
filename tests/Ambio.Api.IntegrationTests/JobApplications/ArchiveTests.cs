@@ -16,7 +16,7 @@ public class DeleteTests : BaseJobApplicationTests
         var response = await Client.DeleteAsync($"{BaseUrl}/{jobApplication.Id}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-        await AssertNumberOfJobApplicationsInDatabaseAsync(0);
+        await AssertNumberOfJobApplicationsInDatabaseAsync(1);
     }
 
     [Fact]

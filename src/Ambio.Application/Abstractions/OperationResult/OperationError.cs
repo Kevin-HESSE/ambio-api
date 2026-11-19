@@ -20,4 +20,9 @@ public readonly record struct OperationError
         string code = "Unexpected",
         string description = "An unexpected error occurred"
     ) => new(code, description);
+
+    public static OperationError Conflict(
+        string code = "Conflict",
+        string description = "An unexpected conflict occurred"
+    ) => new(code, description);
 }

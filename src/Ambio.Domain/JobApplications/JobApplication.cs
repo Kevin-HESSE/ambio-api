@@ -12,4 +12,7 @@ public abstract class JobApplication : ITimeStampable
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? ArchivedAt { get; set; }
+
+    public bool IsArchived => ArchivedAt is not null;
+    public void Archive(DateTime archivedAt) => ArchivedAt = archivedAt;
 }

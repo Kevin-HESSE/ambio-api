@@ -17,19 +17,22 @@ public class JobApplicationService
     private readonly IValidator<SpontaneousApplicationRequest> _spontaneousRequestValidator;
     private readonly IValidator<UpdateJobApplicationRequest> _updateRequestValidator;
     private readonly IValidator<IJobApplicationFilter> _filterValidator;
+    private readonly TimeProvider _timeProvider;
 
     public JobApplicationService(
         AmbioDbContext ambioDbContext,
         IValidator<OfferApplicationRequest> offerRequestValidator,
         IValidator<SpontaneousApplicationRequest> spontaneousRequestValidator,
         IValidator<UpdateJobApplicationRequest> updateRequestValidator,
-        IValidator<IJobApplicationFilter> filterValidator)
+        IValidator<IJobApplicationFilter> filterValidator,
+        TimeProvider timeProvider)
     {
         _ambioDbContext = ambioDbContext;
         _offerRequestValidator = offerRequestValidator;
         _spontaneousRequestValidator = spontaneousRequestValidator;
         _updateRequestValidator = updateRequestValidator;
         _filterValidator = filterValidator;
+        _timeProvider = timeProvider;
     }
 
     public async Task<ResultFor<CollectionResponse<JobApplicationResponse>>> GetAll(
@@ -170,6 +173,11 @@ public class JobApplicationService
             return ResultFor<JobApplicationResponse>.NotFound();
         }
 
+        if (existingApplication.IsArchived)
+        {
+            return ResultFor<JobApplicationResponse>.AlreadyArchived();
+        }
+
         var appliedRules = existingApplication switch
         {
             OfferApplication => UpdateJobApplicationValidator.OfferApplicationRules,
@@ -200,14 +208,16 @@ public class JobApplicationService
         return ResultFor<JobApplicationResponse>.Success(existingApplication.ToResponse());
     }
 
-    public async Task<ResultFor<bool>> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<ResultFor<bool>> Archive(Guid id, CancellationToken cancellationToken)
     {
         var existingApplication = await _ambioDbContext.JobApplications
             .FindAsync([id], cancellationToken: cancellationToken);
 
         if (existingApplication is null) return ResultFor<bool>.NotFound();
 
-        _ambioDbContext.JobApplications.Remove(existingApplication);
+        if (existingApplication.IsArchived) return ResultFor<bool>.AlreadyArchived();
+
+        existingApplication.Archive(_timeProvider.GetUtcNow().UtcDateTime);
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
         return ResultFor<bool>.Success(true);

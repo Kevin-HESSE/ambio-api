@@ -24,5 +24,14 @@ public static class ResultForExtensions
 
             return ResultFor<T>.Failure(ResultKind.ValidationFailed, errors);
         }
+
+        public static ResultFor<T> AlreadyArchived()
+        {
+            var errors = OperationError.Conflict(
+                code: "ALREADY_ARCHIVED",
+                description: "The resource is already archived.");
+
+            return ResultFor<T>.Failure(ResultKind.Conflict, errors);
+        }
     }
 }

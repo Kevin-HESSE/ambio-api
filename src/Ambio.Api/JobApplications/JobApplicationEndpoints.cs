@@ -18,7 +18,7 @@ public static class JobApplicationEndpoints
         baseEndpoint.MapPost("/", CreateHandler);
         baseEndpoint.MapPost("/spontaneous", CreateSpontaneousHandler);
         baseEndpoint.MapPut("/{id:guid}", UpdateHandler);
-        baseEndpoint.MapDelete("/{id:guid}", DeleteHandler);
+        baseEndpoint.MapPost("/{id:guid}/archive", ArchiveHandler);
     }
 
     private static async Task<Results<Ok<PaginationResponse<JobApplicationResponse>>, ValidationProblem>>
@@ -86,7 +86,7 @@ public static class JobApplicationEndpoints
         );
     }
 
-    private static async Task<Results<Ok<JobApplicationResponse>, ValidationProblem, NotFound>> UpdateHandler(
+    private static async Task<Results<Ok<JobApplicationResponse>, ValidationProblem, Conflict, NotFound>> UpdateHandler(
         Guid id,
         UpdateJobApplicationRequest updateRequest,
         JobApplicationService jobApplicationService,
@@ -94,22 +94,30 @@ public static class JobApplicationEndpoints
     {
         var result = await jobApplicationService.Update(id, updateRequest, cancellationToken);
 
+        // TODO Migrate later to fluid API
+        // return result.ConvertToHttpResult()
+        //     .IsUpdated()
+        //     .OrHaveInvalidData()
+        //     .OrAlreadyArchived()
+        //     .OrFinallyNotFound();
         return result.Match(
             onSuccess: jobApplication => TypedResults.Ok(jobApplication),
             onInvalid: errors => TypedResults.ValidationProblem(errors),
+            onArchived: _ => TypedResults.Conflict(),
             onError: _ => TypedResults.NotFound()
         );
     }
 
-    private static async Task<Results<NoContent, NotFound>> DeleteHandler(
+    private static async Task<Results<NoContent, Conflict, NotFound>> ArchiveHandler(
         Guid id,
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
     {
-        var result = await jobApplicationService.Delete(id, cancellationToken);
+        var result = await jobApplicationService.Archive(id, cancellationToken);
 
         return result.Match(
             onSuccess: _ => TypedResults.NoContent(),
+            onInvalid: _ => TypedResults.Conflict(),
             onError: _ => TypedResults.NotFound()
         );
     }
