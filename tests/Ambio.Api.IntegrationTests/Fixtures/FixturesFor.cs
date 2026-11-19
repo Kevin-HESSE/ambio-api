@@ -61,9 +61,9 @@ public static class FixturesFor
                 .RuleFor(j => j.Title, f => title ?? f.Name.JobTitle())
                 .RuleFor(j => j.Company, f => company ?? f.Company.CompanyName())
                 .RuleFor(j => j.Status, f => status ?? f.PickRandom<ApplicationStatus>())
-                .RuleFor(j => j.AppliedOn, (f) => f.Date.PastDateOnly())
+                .RuleFor(j => j.AppliedOn, (f) => f.Date.PastDateOnly(refDate: TestClock.Today))
                 .RuleSet(IsArchived, set =>
-                    set.FinishWith((faker, c) => c.ArchivedAt = faker.Date.Past().ToUniversalTime())
+                    set.FinishWith((faker, c) => c.ArchivedAt = faker.Date.Past(refDate: TestClock.Start.UtcDateTime).ToUniversalTime())
                 );
 
             return faker;
@@ -76,9 +76,9 @@ public static class FixturesFor
                 .RuleFor(j => j.Company, f => company ?? f.Company.CompanyName())
                 .RuleFor(j => j.Url, f => f.Internet.Url())
                 .RuleFor(j => j.Status, f => status ?? f.PickRandom<ApplicationStatus>())
-                .RuleFor(j => j.AppliedOn, (f) => f.Date.PastDateOnly())
+                .RuleFor(j => j.AppliedOn, (f) => f.Date.PastDateOnly(refDate: TestClock.Today))
                 .RuleSet(IsArchived, set =>
-                    set.FinishWith((faker, c) => c.ArchivedAt = faker.Date.Future().ToUniversalTime())
+                    set.FinishWith((faker, c) => c.ArchivedAt = faker.Date.Past(refDate: TestClock.Start.UtcDateTime).ToUniversalTime())
                 );
             return faker;
         }

@@ -63,9 +63,7 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
         return new JobApplicationRequest(
             Title: title ?? jobApplication.Title,
             Company: jobApplication.Company,
-            Kind: "offer",
             Url: jobApplication.Url,
-            Status: jobApplication.Status,
-            AppliedAt: jobApplication.AppliedOn);
+            AppliedOn: jobApplication.AppliedOn);
     }
 }
