@@ -24,13 +24,19 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
         return await RegisterJobApplicationInDatabaseAsync(jobApplication);
     }
 
+    protected async Task<SpontaneousApplication> CreateSpontaneousApplicationAsync()
+    {
+        var jobApplication = FixturesFor.JobApplication.GetSpontaneous();
+        return await RegisterJobApplicationInDatabaseAsync(jobApplication);
+    }
+
     // protected async Task<List<JobApplication>> CreateJobApplicationsAsync(int count)
     // {
     //     var jobApplications = FixturesFor.JobApplication.GetOffer(count);
     //     return await RegisterJobApplicationsInDatabaseAsync(jobApplications);
     // }
 
-    protected async Task<OfferApplication> RegisterJobApplicationInDatabaseAsync(OfferApplication jobApplication)
+    protected async Task<T> RegisterJobApplicationInDatabaseAsync<T>(T jobApplication) where T : JobApplication
     {
         DbContext.JobApplications.Add(jobApplication);
         await DbContext.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken);
