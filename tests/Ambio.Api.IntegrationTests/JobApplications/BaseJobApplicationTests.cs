@@ -1,7 +1,10 @@
+using System.Net;
+
 using Ambio.Api.IntegrationTests.Fixtures;
 using Ambio.Application.JobApplications;
 using Ambio.Domain.JobApplications;
 
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
@@ -65,5 +68,23 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
             Company: jobApplication.Company,
             Url: jobApplication.Url,
             AppliedOn: jobApplication.AppliedOn);
+    }
+
+    protected static SpontaneousApplicationRequest GenerateSpontaneousRequest(SpontaneousApplication jobApplication)
+    {
+        return new SpontaneousApplicationRequest(
+            Title: jobApplication.Title,
+            Company: jobApplication.Company,
+            AppliedOn: jobApplication.AppliedOn);
+    }
+
+    protected async Task AssertValidationProblemAsync(HttpResponseMessage response, string expectedKey)
+    {
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var problem = await ReadContentAsync<HttpValidationProblemDetails>(response);
+        Assert.Contains(expectedKey, problem.Errors.Keys);
+
+        await AssertNumberOfJobApplicationsInDatabaseAsync(0);
     }
 }
