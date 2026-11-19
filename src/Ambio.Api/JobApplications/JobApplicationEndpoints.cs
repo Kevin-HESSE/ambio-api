@@ -88,11 +88,11 @@ public static class JobApplicationEndpoints
 
     private static async Task<Results<Ok<JobApplicationResponse>, ValidationProblem, NotFound>> UpdateHandler(
         Guid id,
-        OfferApplicationRequest offerApplicationRequest,
+        UpdateJobApplicationRequest updateRequest,
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
     {
-        var result = await jobApplicationService.Update(id, offerApplicationRequest, cancellationToken);
+        var result = await jobApplicationService.Update(id, updateRequest, cancellationToken);
 
         return result.Match(
             onSuccess: jobApplication => TypedResults.Ok(jobApplication),

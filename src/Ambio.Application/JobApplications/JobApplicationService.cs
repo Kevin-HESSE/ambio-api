@@ -15,17 +15,20 @@ public class JobApplicationService
     private readonly AmbioDbContext _ambioDbContext;
     private readonly IValidator<OfferApplicationRequest> _offerRequestValidator;
     private readonly IValidator<SpontaneousApplicationRequest> _spontaneousRequestValidator;
+    private readonly IValidator<UpdateJobApplicationRequest> _updateRequestValidator;
     private readonly IValidator<IJobApplicationFilter> _filterValidator;
 
     public JobApplicationService(
         AmbioDbContext ambioDbContext,
         IValidator<OfferApplicationRequest> offerRequestValidator,
         IValidator<SpontaneousApplicationRequest> spontaneousRequestValidator,
+        IValidator<UpdateJobApplicationRequest> updateRequestValidator,
         IValidator<IJobApplicationFilter> filterValidator)
     {
         _ambioDbContext = ambioDbContext;
         _offerRequestValidator = offerRequestValidator;
         _spontaneousRequestValidator = spontaneousRequestValidator;
+        _updateRequestValidator = updateRequestValidator;
         _filterValidator = filterValidator;
     }
 
@@ -156,18 +159,10 @@ public class JobApplicationService
         return ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse());
     }
 
-    public async Task<ResultFor<JobApplicationResponse>> Update(Guid id, OfferApplicationRequest request,
+    public async Task<ResultFor<JobApplicationResponse>> Update(Guid id, UpdateJobApplicationRequest request,
         CancellationToken cancellationToken)
     {
-        var validationResult = await _offerRequestValidator.ValidateAsync(request, cancellationToken);
-
-        if (!validationResult.IsValid)
-        {
-            return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
-        }
-
         var existingApplication = await _ambioDbContext.JobApplications
-            .OfType<OfferApplication>()
             .SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         if (existingApplication is null)
@@ -175,11 +170,30 @@ public class JobApplicationService
             return ResultFor<JobApplicationResponse>.NotFound();
         }
 
+        var appliedRules = existingApplication switch
+        {
+            OfferApplication => UpdateJobApplicationValidator.OfferApplicationRules,
+            SpontaneousApplication => UpdateJobApplicationValidator.SpontaneousApplicationRules,
+            _ => throw new InvalidOperationException("Unknown job application type")
+        };
+
+        var validationResult = await _updateRequestValidator.ValidateAsync(
+            request,
+            options => options.IncludeRulesNotInRuleSet().IncludeRuleSets(appliedRules),
+            cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
+        }
+
         existingApplication.Title = request.Title;
-        existingApplication.Url = request.Url;
         existingApplication.Company = request.Company;
-        // existingApplication.Status = request.Status;
-        existingApplication.AppliedOn = request.AppliedOn;
+
+        if (existingApplication is OfferApplication application)
+        {
+            application.Url = request.Url!;
+        }
 
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
