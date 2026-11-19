@@ -57,10 +57,10 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
             .SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
     }
 
-    protected static JobApplicationRequest GenerateJobApplicationRequest(OfferApplication jobApplication,
+    protected static OfferApplicationRequest GenerateJobApplicationRequest(OfferApplication jobApplication,
         string? title = null)
     {
-        return new JobApplicationRequest(
+        return new OfferApplicationRequest(
             Title: title ?? jobApplication.Title,
             Company: jobApplication.Company,
             Url: jobApplication.Url,

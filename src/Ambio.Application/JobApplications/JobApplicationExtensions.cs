@@ -36,28 +36,18 @@ public static class JobApplicationExtensions
         ArchivedAt: application.ArchivedAt
     );
 
-    extension(JobApplicationRequest request)
+    public static OfferApplication ToEntity(this OfferApplicationRequest request) => new()
     {
-        public JobApplication ToEntity(ApplicationKind kind) => kind switch
-        {
-            ApplicationKind.Offer => request.ToOfferApplication(),
-            ApplicationKind.Spontaneous => request.ToSpontaneousApplication(),
-            _ => throw new ArgumentOutOfRangeException()
-        };
+        Title = request.Title,
+        Url = request.Url,
+        Company = request.Company,
+        AppliedOn = request.AppliedOn
+    };
 
-        private SpontaneousApplication ToSpontaneousApplication() => new()
-        {
-            Title = request.Title,
-            Company = request.Company,
-            AppliedOn = request.AppliedOn
-        };
-
-        private OfferApplication ToOfferApplication() => new()
-        {
-            Title = request.Title,
-            Url = request.Url,
-            Company = request.Company,
-            AppliedOn = request.AppliedOn
-        };
-    }
+    public static SpontaneousApplication ToEntity(this SpontaneousApplicationRequest request) => new()
+    {
+        Title = request.Title,
+        Company = request.Company,
+        AppliedOn = request.AppliedOn
+    };
 }

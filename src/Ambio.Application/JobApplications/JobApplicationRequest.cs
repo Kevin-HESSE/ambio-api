@@ -1,9 +1,6 @@
-
 namespace Ambio.Application.JobApplications;
 
-public record JobApplicationRequest(
+public abstract record JobApplicationRequest(
     string Title,
     string Company,
-    string Url,
-    DateOnly AppliedOn
-);
+    DateOnly AppliedOn);

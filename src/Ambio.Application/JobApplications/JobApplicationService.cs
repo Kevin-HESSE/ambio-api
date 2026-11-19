@@ -13,16 +13,19 @@ namespace Ambio.Application.JobApplications;
 public class JobApplicationService
 {
     private readonly AmbioDbContext _ambioDbContext;
-    private readonly IValidator<JobApplicationRequest> _requestValidator;
+    private readonly IValidator<OfferApplicationRequest> _offerRequestValidator;
+    private readonly IValidator<SpontaneousApplicationRequest> _spontaneousRequestValidator;
     private readonly IValidator<IJobApplicationFilter> _filterValidator;
 
     public JobApplicationService(
         AmbioDbContext ambioDbContext,
-        IValidator<JobApplicationRequest> requestValidator,
+        IValidator<OfferApplicationRequest> offerRequestValidator,
+        IValidator<SpontaneousApplicationRequest> spontaneousRequestValidator,
         IValidator<IJobApplicationFilter> filterValidator)
     {
         _ambioDbContext = ambioDbContext;
-        _requestValidator = requestValidator;
+        _offerRequestValidator = offerRequestValidator;
+        _spontaneousRequestValidator = spontaneousRequestValidator;
         _filterValidator = filterValidator;
     }
 
@@ -118,27 +121,45 @@ public class JobApplicationService
             : ResultFor<JobApplicationResponse>.NotFound();
     }
 
-    public async Task<ResultFor<JobApplicationResponse>> Create(JobApplicationRequest request,
+    public async Task<ResultFor<JobApplicationResponse>> CreateOffer(OfferApplicationRequest request,
         CancellationToken cancellationToken)
     {
-        var validationResult = await _requestValidator.ValidateAsync(request, cancellationToken);
+        var validationResult = await _offerRequestValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
             return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
         }
 
-        var jobApplication = request.ToEntity(kind: ApplicationKind.Offer);
+        var jobApplication = request.ToEntity();
         await _ambioDbContext.JobApplications.AddAsync(jobApplication, cancellationToken);
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
         return ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse());
     }
 
-    public async Task<ResultFor<JobApplicationResponse>> Update(Guid id, JobApplicationRequest request,
+    public async Task<ResultFor<JobApplicationResponse>> CreateSpontaneous(
+        SpontaneousApplicationRequest request,
         CancellationToken cancellationToken)
     {
-        var validationResult = await _requestValidator.ValidateAsync(request, cancellationToken);
+        var validationResult = await _spontaneousRequestValidator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
+        }
+
+        var jobApplication = request.ToEntity();
+        await _ambioDbContext.JobApplications.AddAsync(jobApplication, cancellationToken);
+        await _ambioDbContext.SaveChangesAsync(cancellationToken);
+
+        return ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse());
+    }
+
+    public async Task<ResultFor<JobApplicationResponse>> Update(Guid id, OfferApplicationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var validationResult = await _offerRequestValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {

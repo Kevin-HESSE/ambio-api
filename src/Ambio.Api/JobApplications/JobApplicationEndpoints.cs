@@ -16,6 +16,7 @@ public static class JobApplicationEndpoints
         baseEndpoint.MapGet("/", GetCollectionHandler);
         baseEndpoint.MapGet("/{id:guid}", GetHandler);
         baseEndpoint.MapPost("/", CreateHandler);
+        baseEndpoint.MapPost("/spontaneous", CreateSpontaneousHandler);
         baseEndpoint.MapPut("/{id:guid}", UpdateHandler);
         baseEndpoint.MapDelete("/{id:guid}", DeleteHandler);
     }
@@ -60,11 +61,24 @@ public static class JobApplicationEndpoints
     }
 
     private static async Task<Results<Created<JobApplicationResponse>, ValidationProblem>> CreateHandler(
-        JobApplicationRequest jobApplicationRequest,
+        OfferApplicationRequest offerApplicationRequest,
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
     {
-        var result = await jobApplicationService.Create(jobApplicationRequest, cancellationToken);
+        var result = await jobApplicationService.CreateOffer(offerApplicationRequest, cancellationToken);
+
+        return result.Match(
+            onSuccess: jobApplication => TypedResults.Created($"{Prefix}/{jobApplication.Id}", jobApplication),
+            onError: errors => TypedResults.ValidationProblem(errors)
+        );
+    }
+
+    private static async Task<Results<Created<JobApplicationResponse>, ValidationProblem>> CreateSpontaneousHandler(
+        SpontaneousApplicationRequest spontaneousApplicationRequest,
+        JobApplicationService jobApplicationService,
+        CancellationToken cancellationToken)
+    {
+        var result = await jobApplicationService.CreateSpontaneous(spontaneousApplicationRequest, cancellationToken);
 
         return result.Match(
             onSuccess: jobApplication => TypedResults.Created($"{Prefix}/{jobApplication.Id}", jobApplication),
@@ -74,11 +88,11 @@ public static class JobApplicationEndpoints
 
     private static async Task<Results<Ok<JobApplicationResponse>, ValidationProblem, NotFound>> UpdateHandler(
         Guid id,
-        JobApplicationRequest jobApplicationRequest,
+        OfferApplicationRequest offerApplicationRequest,
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
     {
-        var result = await jobApplicationService.Update(id, jobApplicationRequest, cancellationToken);
+        var result = await jobApplicationService.Update(id, offerApplicationRequest, cancellationToken);
 
         return result.Match(
             onSuccess: jobApplication => TypedResults.Ok(jobApplication),
