@@ -90,6 +90,31 @@ public class UpdateTests : BaseJobApplicationTests
     }
 
     [Fact]
+    public async Task Update_WhenJobApplicationIsArchived_ShouldReturnConflict()
+    {
+        var jobApplication = await CreateOfferApplicationAsync(archived: true);
+
+        var response = await PutAsync(jobApplication.Id, GenerateOfferPayload(jobApplication));
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        await AssertUnchangedAsync(jobApplication);
+    }
+
+    [Fact]
+    public async Task Update_WhenJobApplicationIsArchivedAndPayloadIsInvalid_ShouldReturnConflict()
+    {
+        // An archived application is read-only: the archive check comes before the validation
+        var jobApplication = await CreateOfferApplicationAsync(archived: true);
+        var payload = GenerateOfferPayload(jobApplication);
+        payload["title"] = "";
+
+        var response = await PutAsync(jobApplication.Id, payload);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        await AssertUnchangedAsync(jobApplication);
+    }
+
+    [Fact]
     public async Task Update_WhenJobApplicationExists_ShouldUpdateTimestamps()
     {
         var jobApplication = await CreateOfferApplicationAsync();
@@ -271,6 +296,11 @@ public class UpdateTests : BaseJobApplicationTests
         var problem = await ReadContentAsync<HttpValidationProblemDetails>(response);
         Assert.Equivalent(expectedKeys, problem.Errors.Keys);
 
+        await AssertUnchangedAsync(original);
+    }
+
+    private async Task AssertUnchangedAsync(JobApplication original)
+    {
         var persisted = await GetPersistedJobApplicationAsync(original.Id);
         Assert.Equal(original.Title, persisted.Title);
         Assert.Equal(original.Company, persisted.Company);

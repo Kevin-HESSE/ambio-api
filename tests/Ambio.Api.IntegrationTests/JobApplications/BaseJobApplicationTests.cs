@@ -18,23 +18,49 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
     }
 
 
-    protected async Task<OfferApplication> CreateOfferApplicationAsync()
+    protected async Task<OfferApplication> CreateOfferApplicationAsync(bool archived = false)
     {
-        var jobApplication = FixturesFor.JobApplication.GetOffer();
+        var jobApplication = FixturesFor.JobApplication.GetOffer(archived);
         return await RegisterJobApplicationInDatabaseAsync(jobApplication);
     }
 
-    protected async Task<SpontaneousApplication> CreateSpontaneousApplicationAsync()
+    protected async Task<List<OfferApplication>> CreateOfferApplicationAsync(int count)
     {
-        var jobApplication = FixturesFor.JobApplication.GetSpontaneous();
+        var jobApplications = FixturesFor.JobApplication.GetOffer(count);
+        return await RegisterJobApplicationsInDatabaseAsync(jobApplications);
+    }
+
+    protected async Task<SpontaneousApplication> CreateSpontaneousApplicationAsync(bool archived = false)
+    {
+        var jobApplication = FixturesFor.JobApplication.GetSpontaneous(archived);
         return await RegisterJobApplicationInDatabaseAsync(jobApplication);
     }
 
-    // protected async Task<List<JobApplication>> CreateJobApplicationsAsync(int count)
-    // {
-    //     var jobApplications = FixturesFor.JobApplication.GetOffer(count);
-    //     return await RegisterJobApplicationsInDatabaseAsync(jobApplications);
-    // }
+    protected async Task<List<SpontaneousApplication>> CreateSpontaneousApplicationAsync(int count)
+    {
+        var jobApplications = FixturesFor.JobApplication.GetSpontaneous(count);
+        return await RegisterJobApplicationsInDatabaseAsync(jobApplications);
+    }
+
+    protected async Task<JobApplication> CreateJobApplicationAsync(ApplicationKind kind, bool archived = false)
+    {
+        return kind switch
+        {
+            ApplicationKind.Offer => await CreateOfferApplicationAsync(archived),
+            ApplicationKind.Spontaneous => await CreateSpontaneousApplicationAsync(archived),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
+    }
+
+    protected async Task<IEnumerable<JobApplication>> CreateJobApplicationAsync(ApplicationKind kind, int count)
+    {
+        return kind switch
+        {
+            ApplicationKind.Offer => await CreateOfferApplicationAsync(count),
+            ApplicationKind.Spontaneous => await CreateSpontaneousApplicationAsync(count),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
+    }
 
     protected async Task<T> RegisterJobApplicationInDatabaseAsync<T>(T jobApplication) where T : JobApplication
     {
@@ -43,7 +69,7 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
         return jobApplication;
     }
 
-    protected async Task<List<JobApplication>> RegisterJobApplicationsInDatabaseAsync(List<JobApplication> jobApplications)
+    protected async Task<List<T>> RegisterJobApplicationsInDatabaseAsync<T>(List<T> jobApplications) where T : JobApplication
     {
         DbContext.JobApplications.AddRange(jobApplications);
         await DbContext.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken);
