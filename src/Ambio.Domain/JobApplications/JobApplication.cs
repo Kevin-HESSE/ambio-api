@@ -8,7 +8,7 @@ public abstract class JobApplication : ITimeStampable
     public required string Title { get; set; }
     public required string Company { get; set; }
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Sent;
-    public DateOnly? AppliedOn { get; set; }
+    public DateOnly AppliedOn { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? ArchivedAt { get; set; }

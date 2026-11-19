@@ -28,7 +28,7 @@ namespace Ambio.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<DateOnly?>("AppliedOn")
+                    b.Property<DateOnly>("AppliedOn")
                         .HasColumnType("date")
                         .HasColumnName("applied_on");
 

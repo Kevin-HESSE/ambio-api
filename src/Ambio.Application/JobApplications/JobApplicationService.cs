@@ -108,12 +108,6 @@ public class JobApplicationService
         return ResultFor<CollectionResponse<JobApplicationResponse>>.Success(result);
     }
 
-    // Npgsql emits ESCAPE '' when no escape character is given, so it has to be explicit
-    private const string LikeEscapeCharacter = @"\";
-
-    private static string EscapeLikePattern(string value) =>
-        value.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
-
     public async Task<ResultFor<JobApplicationResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var jobApplication = await _ambioDbContext.JobApplications
@@ -134,7 +128,7 @@ public class JobApplicationService
             return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
         }
 
-        var jobApplication = request.ToEntity();
+        var jobApplication = request.ToEntity(kind: ApplicationKind.Offer);
         await _ambioDbContext.JobApplications.AddAsync(jobApplication, cancellationToken);
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
@@ -163,8 +157,8 @@ public class JobApplicationService
         existingApplication.Title = request.Title;
         existingApplication.Url = request.Url;
         existingApplication.Company = request.Company;
-        existingApplication.Status = request.Status;
-        existingApplication.AppliedOn = request.AppliedAt;
+        // existingApplication.Status = request.Status;
+        existingApplication.AppliedOn = request.AppliedOn;
 
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
@@ -183,4 +177,10 @@ public class JobApplicationService
 
         return ResultFor<bool>.Success(true);
     }
+
+    // Npgsql emits ESCAPE '' when no escape character is given, so it has to be explicit
+    private const string LikeEscapeCharacter = @"\";
+
+    private static string EscapeLikePattern(string value) =>
+        value.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
 }
