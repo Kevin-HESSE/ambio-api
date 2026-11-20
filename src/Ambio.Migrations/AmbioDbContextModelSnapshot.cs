@@ -77,6 +77,47 @@ namespace Ambio.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("Ambio.Domain.JobApplications.StatusHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateOnly>("ChangedAt")
+                        .HasColumnType("date")
+                        .HasColumnName("changed_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("JobApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_application_id");
+
+                    b.Property<string>("StatusFrom")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status_from");
+
+                    b.Property<string>("StatusTo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status_to");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_status_history");
+
+                    b.HasIndex("JobApplicationId")
+                        .HasDatabaseName("ix_status_history_job_application_id");
+
+                    b.ToTable("status_history", (string)null);
+                });
+
             modelBuilder.Entity("Ambio.Domain.JobApplications.OfferApplication", b =>
                 {
                     b.HasBaseType("Ambio.Domain.JobApplications.JobApplication");
@@ -99,6 +140,21 @@ namespace Ambio.Migrations
                     b.ToTable("job_applications", (string)null);
 
                     b.HasDiscriminator().HasValue("Spontaneous");
+                });
+
+            modelBuilder.Entity("Ambio.Domain.JobApplications.StatusHistory", b =>
+                {
+                    b.HasOne("Ambio.Domain.JobApplications.JobApplication", null)
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("JobApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_status_history_job_applications_job_application_id");
+                });
+
+            modelBuilder.Entity("Ambio.Domain.JobApplications.JobApplication", b =>
+                {
+                    b.Navigation("StatusHistory");
                 });
 #pragma warning restore 612, 618
         }

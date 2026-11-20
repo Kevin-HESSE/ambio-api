@@ -29,5 +29,13 @@ public class JobApplicationMapping : IEntityTypeConfiguration<JobApplication>
         builder.HasDiscriminator<string>(Discriminator)
             .HasValue<OfferApplication>(nameof(ApplicationKind.Offer))
             .HasValue<SpontaneousApplication>(nameof(ApplicationKind.Spontaneous));
+
+        builder.HasMany(ja => ja.StatusHistory)
+            .WithOne()
+            .HasForeignKey(s => s.JobApplicationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(ja => ja.StatusHistory)
+            .HasField("_statusHistory");
     }
 }

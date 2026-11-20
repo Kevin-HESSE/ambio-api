@@ -48,6 +48,13 @@ public static class JobApplicationExtensions
     {
         Title = request.Title,
         Company = request.Company,
-        AppliedOn = request.AppliedOn
+        AppliedOn = request.AppliedOn,
     };
+
+    public static JobApplicationDetailedResponse ToDetailedResponse(this JobApplication application) =>
+        new(application.ToResponse(), application.StatusHistory);
+
+    public static StatusHistoryResponse ToResponse(this StatusHistory history) => new(
+        Status: history.StatusTo,
+        Date: history.ChangedAt);
 }

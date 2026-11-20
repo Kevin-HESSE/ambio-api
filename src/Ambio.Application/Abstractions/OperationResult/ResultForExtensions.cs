@@ -42,5 +42,32 @@ public static class ResultForExtensions
 
             return ResultFor<T>.Failure(ResultKind.Conflict, errors);
         }
+
+        public static ResultFor<T> StatusIdentical()
+        {
+            var errors = OperationError.Conflict(
+                code: "STATUS_IDENTICAL",
+                description: "The new status is identical to the current one.");
+
+            return ResultFor<T>.Failure(ResultKind.Conflict, errors);
+        }
+
+        public static ResultFor<T> StatusNotFollowingWorkflow()
+        {
+            var errors = OperationError.Conflict(
+                code: "INVALID_WORKFLOW",
+                description: "The new status is not following the workflow.");
+
+            return ResultFor<T>.Failure(ResultKind.Conflict, errors);
+        }
+
+        public static ResultFor<T> DateBeforePreviousState()
+        {
+            var errors = OperationError.Validation(
+                code: "DATE_BEFORE_PREVIOUS_STATE",
+                description: "The date provided is set before the previous state.");
+
+            return ResultFor<T>.Failure(ResultKind.ValidationFailed, errors);
+        }
     }
 }

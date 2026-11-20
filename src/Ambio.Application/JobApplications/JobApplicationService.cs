@@ -17,6 +17,7 @@ public class JobApplicationService
     private readonly IValidator<SpontaneousApplicationRequest> _spontaneousRequestValidator;
     private readonly IValidator<UpdateJobApplicationRequest> _updateRequestValidator;
     private readonly IValidator<IJobApplicationFilter> _filterValidator;
+    private readonly IValidator<StatusRequest> _statusRequestValidator;
     private readonly TimeProvider _timeProvider;
 
     public JobApplicationService(
@@ -25,6 +26,7 @@ public class JobApplicationService
         IValidator<SpontaneousApplicationRequest> spontaneousRequestValidator,
         IValidator<UpdateJobApplicationRequest> updateRequestValidator,
         IValidator<IJobApplicationFilter> filterValidator,
+        IValidator<StatusRequest> statusRequestValidator,
         TimeProvider timeProvider)
     {
         _ambioDbContext = ambioDbContext;
@@ -32,6 +34,7 @@ public class JobApplicationService
         _spontaneousRequestValidator = spontaneousRequestValidator;
         _updateRequestValidator = updateRequestValidator;
         _filterValidator = filterValidator;
+        _statusRequestValidator = statusRequestValidator;
         _timeProvider = timeProvider;
     }
 
@@ -117,35 +120,37 @@ public class JobApplicationService
         return ResultFor<CollectionResponse<JobApplicationResponse>>.Success(result);
     }
 
-    public async Task<ResultFor<JobApplicationResponse>> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<ResultFor<JobApplicationDetailedResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var jobApplication = await _ambioDbContext.JobApplications
             .AsNoTracking()
+            .Include(ja => ja.StatusHistory.OrderBy(s => s.CreatedAt).ThenBy(s => s.Id))
             .FirstOrDefaultAsync(ja => ja.Id == id, cancellationToken: cancellationToken);
 
         return jobApplication is not null
-            ? ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse())
-            : ResultFor<JobApplicationResponse>.NotFound();
+            ? ResultFor<JobApplicationDetailedResponse>.Success(jobApplication.ToDetailedResponse())
+            : ResultFor<JobApplicationDetailedResponse>.NotFound();
     }
 
-    public async Task<ResultFor<JobApplicationResponse>> CreateOffer(OfferApplicationRequest request,
+    public async Task<ResultFor<JobApplicationDetailedResponse>> CreateOffer(OfferApplicationRequest request,
         CancellationToken cancellationToken)
     {
         var validationResult = await _offerRequestValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
-            return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
+            return ResultFor<JobApplicationDetailedResponse>.NotValid(validationResult.Errors);
         }
 
         var jobApplication = request.ToEntity();
+        jobApplication.MarkAsSent();
         await _ambioDbContext.JobApplications.AddAsync(jobApplication, cancellationToken);
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
-        return ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse());
+        return ResultFor<JobApplicationDetailedResponse>.Success(jobApplication.ToDetailedResponse());
     }
 
-    public async Task<ResultFor<JobApplicationResponse>> CreateSpontaneous(
+    public async Task<ResultFor<JobApplicationDetailedResponse>> CreateSpontaneous(
         SpontaneousApplicationRequest request,
         CancellationToken cancellationToken)
     {
@@ -153,30 +158,32 @@ public class JobApplicationService
 
         if (!validationResult.IsValid)
         {
-            return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
+            return ResultFor<JobApplicationDetailedResponse>.NotValid(validationResult.Errors);
         }
 
         var jobApplication = request.ToEntity();
+        jobApplication.MarkAsSent();
         await _ambioDbContext.JobApplications.AddAsync(jobApplication, cancellationToken);
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
-        return ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse());
+        return ResultFor<JobApplicationDetailedResponse>.Success(jobApplication.ToDetailedResponse());
     }
 
-    public async Task<ResultFor<JobApplicationResponse>> Update(Guid id, UpdateJobApplicationRequest request,
+    public async Task<ResultFor<JobApplicationDetailedResponse>> Update(Guid id, UpdateJobApplicationRequest request,
         CancellationToken cancellationToken)
     {
         var existingApplication = await _ambioDbContext.JobApplications
+            .Include(ja => ja.StatusHistory.OrderBy(s => s.CreatedAt).ThenBy(s => s.Id))
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         if (existingApplication is null)
         {
-            return ResultFor<JobApplicationResponse>.NotFound();
+            return ResultFor<JobApplicationDetailedResponse>.NotFound();
         }
 
         if (existingApplication.IsArchived)
         {
-            return ResultFor<JobApplicationResponse>.AlreadyArchived();
+            return ResultFor<JobApplicationDetailedResponse>.AlreadyArchived();
         }
 
         var appliedRules = existingApplication switch
@@ -193,7 +200,7 @@ public class JobApplicationService
 
         if (!validationResult.IsValid)
         {
-            return ResultFor<JobApplicationResponse>.NotValid(validationResult.Errors);
+            return ResultFor<JobApplicationDetailedResponse>.NotValid(validationResult.Errors);
         }
 
         existingApplication.Title = request.Title;
@@ -206,7 +213,7 @@ public class JobApplicationService
 
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
-        return ResultFor<JobApplicationResponse>.Success(existingApplication.ToResponse());
+        return ResultFor<JobApplicationDetailedResponse>.Success(existingApplication.ToDetailedResponse());
     }
 
     public async Task<ResultFor<bool>> Archive(Guid id, CancellationToken cancellationToken)
@@ -237,6 +244,55 @@ public class JobApplicationService
         await _ambioDbContext.SaveChangesAsync(cancellationToken);
 
         return ResultFor<bool>.Success(true);
+    }
+
+    public async Task<ResultFor<bool>> ChangeStatus(Guid id, StatusRequest request, CancellationToken cancellationToken)
+    {
+        var validationResult = await _statusRequestValidator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return ResultFor<bool>.NotValid(validationResult.Errors);
+        }
+
+        var existingApplication = await _ambioDbContext.JobApplications
+            .Include(ja => ja.StatusHistory.OrderBy(s => s.CreatedAt).ThenBy(s => s.Id))
+            .FirstOrDefaultAsync(ja => ja.Id == id, cancellationToken: cancellationToken);
+
+        if (existingApplication is null)
+        {
+            return ResultFor<bool>.NotFound();
+        }
+
+        if (existingApplication.IsArchived)
+        {
+            return ResultFor<bool>.AlreadyArchived();
+        }
+
+        var to = Enum.Parse<ApplicationStatus>(request.Status, ignoreCase: true);
+
+        if (!existingApplication.CanChangeStatus(to))
+        {
+            return ResultFor<bool>.StatusIdentical();
+        }
+
+        if (!StatusHistoryWorkflow.Allows(existingApplication.Status, to))
+        {
+            return ResultFor<bool>.StatusNotFollowingWorkflow();
+        }
+
+        var changedAtProvider = request.Date ?? DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
+
+        var result = existingApplication.ChangeStatus(to, changedAtProvider);
+
+        if (!result)
+        {
+            return ResultFor<bool>.DateBeforePreviousState();
+        }
+
+        await _ambioDbContext.SaveChangesAsync(cancellationToken);
+        return ResultFor<bool>.Success(true);
+
     }
 
     // Npgsql emits ESCAPE '' when no escape character is given, so it has to be explicit

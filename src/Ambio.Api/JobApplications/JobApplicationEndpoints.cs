@@ -18,6 +18,7 @@ public static class JobApplicationEndpoints
         baseEndpoint.MapPost("/", CreateHandler);
         baseEndpoint.MapPost("/spontaneous", CreateSpontaneousHandler);
         baseEndpoint.MapPut("/{id:guid}", UpdateHandler);
+        baseEndpoint.MapPost("/{id:guid}/status", UpdateStatusHandler);
         baseEndpoint.MapPost("/{id:guid}/archive", ArchiveHandler);
         baseEndpoint.MapPost("/{id:guid}/reopen", ReopenHandler);
     }
@@ -48,7 +49,7 @@ public static class JobApplicationEndpoints
             onError: errors => TypedResults.ValidationProblem(errors));
     }
 
-    private static async Task<Results<Ok<JobApplicationResponse>, NotFound>> GetHandler(
+    private static async Task<Results<Ok<JobApplicationDetailedResponse>, NotFound>> GetHandler(
         Guid id,
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
@@ -61,7 +62,7 @@ public static class JobApplicationEndpoints
         );
     }
 
-    private static async Task<Results<Created<JobApplicationResponse>, ValidationProblem>> CreateHandler(
+    private static async Task<Results<Created<JobApplicationDetailedResponse>, ValidationProblem>> CreateHandler(
         OfferApplicationRequest offerApplicationRequest,
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
@@ -74,7 +75,7 @@ public static class JobApplicationEndpoints
         );
     }
 
-    private static async Task<Results<Created<JobApplicationResponse>, ValidationProblem>> CreateSpontaneousHandler(
+    private static async Task<Results<Created<JobApplicationDetailedResponse>, ValidationProblem>> CreateSpontaneousHandler(
         SpontaneousApplicationRequest spontaneousApplicationRequest,
         JobApplicationService jobApplicationService,
         CancellationToken cancellationToken)
@@ -87,7 +88,7 @@ public static class JobApplicationEndpoints
         );
     }
 
-    private static async Task<Results<Ok<JobApplicationResponse>, ValidationProblem, Conflict, NotFound>> UpdateHandler(
+    private static async Task<Results<Ok<JobApplicationDetailedResponse>, ValidationProblem, Conflict, NotFound>> UpdateHandler(
         Guid id,
         UpdateJobApplicationRequest updateRequest,
         JobApplicationService jobApplicationService,
@@ -135,5 +136,21 @@ public static class JobApplicationEndpoints
             onInvalid: _ => TypedResults.Conflict(),
             onError: _ => TypedResults.NotFound()
         );
+    }
+
+    private static async Task<Results<NoContent, ValidationProblem, Conflict, NotFound>>
+        UpdateStatusHandler(
+            Guid id,
+            StatusRequest request,
+            JobApplicationService jobApplicationService,
+            CancellationToken cancellationToken)
+    {
+        var result = await jobApplicationService.ChangeStatus(id, request, cancellationToken);
+
+        return result.Match(
+            onSuccess: _ => TypedResults.NoContent(),
+            onInvalid: errors => TypedResults.ValidationProblem(errors),
+            onArchived: _ => TypedResults.Conflict(),
+            onError: _ => TypedResults.NotFound());
     }
 }
