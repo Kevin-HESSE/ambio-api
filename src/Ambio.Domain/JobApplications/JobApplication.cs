@@ -15,4 +15,5 @@ public abstract class JobApplication : ITimeStampable
 
     public bool IsArchived => ArchivedAt is not null;
     public void Archive(DateTime archivedAt) => ArchivedAt = archivedAt;
+    public void Reopen() => ArchivedAt = null;
 }

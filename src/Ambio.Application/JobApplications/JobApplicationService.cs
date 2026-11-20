@@ -223,6 +223,21 @@ public class JobApplicationService
         return ResultFor<bool>.Success(true);
     }
 
+    public async Task<ResultFor<bool>> Reopen(Guid id, CancellationToken cancellationToken)
+    {
+        var existingApplication = await _ambioDbContext.JobApplications
+            .FindAsync([id], cancellationToken: cancellationToken);
+
+        if (existingApplication is null) return ResultFor<bool>.NotFound();
+
+        if (!existingApplication.IsArchived) return ResultFor<bool>.NotArchived();
+
+        existingApplication.Reopen();
+        await _ambioDbContext.SaveChangesAsync(cancellationToken);
+
+        return ResultFor<bool>.Success(true);
+    }
+
     // Npgsql emits ESCAPE '' when no escape character is given, so it has to be explicit
     private const string LikeEscapeCharacter = @"\";
 

@@ -33,5 +33,14 @@ public static class ResultForExtensions
 
             return ResultFor<T>.Failure(ResultKind.Conflict, errors);
         }
+
+        public static ResultFor<T> NotArchived()
+        {
+            var errors = OperationError.Conflict(
+                code: "NOT_ARCHIVED",
+                description: "The resource is not archived.");
+
+            return ResultFor<T>.Failure(ResultKind.Conflict, errors);
+        }
     }
 }

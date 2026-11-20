@@ -19,6 +19,7 @@ public static class JobApplicationEndpoints
         baseEndpoint.MapPost("/spontaneous", CreateSpontaneousHandler);
         baseEndpoint.MapPut("/{id:guid}", UpdateHandler);
         baseEndpoint.MapPost("/{id:guid}/archive", ArchiveHandler);
+        baseEndpoint.MapPost("/{id:guid}/reopen", ReopenHandler);
     }
 
     private static async Task<Results<Ok<PaginationResponse<JobApplicationResponse>>, ValidationProblem>>
@@ -114,6 +115,20 @@ public static class JobApplicationEndpoints
         CancellationToken cancellationToken)
     {
         var result = await jobApplicationService.Archive(id, cancellationToken);
+
+        return result.Match(
+            onSuccess: _ => TypedResults.NoContent(),
+            onInvalid: _ => TypedResults.Conflict(),
+            onError: _ => TypedResults.NotFound()
+        );
+    }
+
+    private static async Task<Results<NoContent, Conflict, NotFound>> ReopenHandler(
+        Guid id,
+        JobApplicationService jobApplicationService,
+        CancellationToken cancellationToken)
+    {
+        var result = await jobApplicationService.Reopen(id, cancellationToken);
 
         return result.Match(
             onSuccess: _ => TypedResults.NoContent(),
