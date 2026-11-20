@@ -1,6 +1,5 @@
 using System.Net;
 
-using Ambio.Api.IntegrationTests.Fixtures;
 using Ambio.Domain.JobApplications;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
