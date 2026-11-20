@@ -1,35 +1,101 @@
+using System.Net;
+
+using Ambio.Api.IntegrationTests.Fixtures;
 using Ambio.Application.JobApplications;
 using Ambio.Domain.JobApplications;
 
-using Bogus;
-
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
 
 public abstract class BaseJobApplicationTests : BaseIntegrationTests
 {
-    protected readonly Faker<JobApplication> JobApplicationGenerator = new Faker<JobApplication>()
-        .RuleFor(j => j.Title, f => f.Lorem.Word())
-        .RuleFor(j => j.Company, f => f.Company.CompanyName())
-        .RuleFor(j => j.Url, f => f.Internet.Url());
-
     protected const string BaseUrl = "/job-applications";
+
     protected BaseJobApplicationTests(AmbioApiFactory factory) : base(factory)
     {
     }
 
-    protected async Task<JobApplication> CreateJobApplicationAsync()
+
+    protected async Task<OfferApplication> CreateOfferApplicationAsync(bool archived = false)
     {
-        var jobApplication = JobApplicationGenerator.Generate();
+        var jobApplication = FixturesFor.JobApplication.GetOffer(archived);
+        return await RegisterJobApplicationInDatabaseAsync(jobApplication);
+    }
+
+    protected async Task<List<OfferApplication>> CreateOfferApplicationAsync(int count)
+    {
+        var jobApplications = FixturesFor.JobApplication.GetOffer(count);
+        return await RegisterJobApplicationsInDatabaseAsync(jobApplications);
+    }
+
+    protected async Task<SpontaneousApplication> CreateSpontaneousApplicationAsync(bool archived = false)
+    {
+        var jobApplication = FixturesFor.JobApplication.GetSpontaneous(archived);
+        return await RegisterJobApplicationInDatabaseAsync(jobApplication);
+    }
+
+    protected async Task<List<SpontaneousApplication>> CreateSpontaneousApplicationAsync(int count)
+    {
+        var jobApplications = FixturesFor.JobApplication.GetSpontaneous(count);
+        return await RegisterJobApplicationsInDatabaseAsync(jobApplications);
+    }
+
+    protected async Task<JobApplication> CreateJobApplicationAsync(ApplicationKind kind, bool archived = false)
+    {
+        return kind switch
+        {
+            ApplicationKind.Offer => await CreateOfferApplicationAsync(archived),
+            ApplicationKind.Spontaneous => await CreateSpontaneousApplicationAsync(archived),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
+    }
+
+    /// <summary>Creates an application as the API would, then walks the workflow up to the given status.
+    /// Each step is saved separately with the clock moved forward, so that created_at is distinct.</summary>
+    protected async Task<JobApplication> CreateJobApplicationAsync(ApplicationKind kind, ApplicationStatus status, bool archived = false)
+    {
+        JobApplication jobApplication = kind switch
+        {
+            ApplicationKind.Offer => FixturesFor.JobApplication.GetOffer(archived, status: ApplicationStatus.Sent),
+            ApplicationKind.Spontaneous => FixturesFor.JobApplication.GetSpontaneous(archived, status: ApplicationStatus.Sent),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
+
+        jobApplication.MarkAsSent();
+        await RegisterJobApplicationInDatabaseAsync(jobApplication);
+
+        foreach (var step in PathTo[status])
+        {
+            FakeTimeProvider.Advance(TimeSpan.FromSeconds(1));
+            Assert.True(jobApplication.ChangeStatus(step, jobApplication.AppliedOn));
+            await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        FakeTimeProvider.Advance(TimeSpan.FromSeconds(1));
+        return jobApplication;
+    }
+
+    protected async Task<IEnumerable<JobApplication>> CreateJobApplicationAsync(ApplicationKind kind, int count)
+    {
+        return kind switch
+        {
+            ApplicationKind.Offer => await CreateOfferApplicationAsync(count),
+            ApplicationKind.Spontaneous => await CreateSpontaneousApplicationAsync(count),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
+    }
+
+    protected async Task<T> RegisterJobApplicationInDatabaseAsync<T>(T jobApplication) where T : JobApplication
+    {
         DbContext.JobApplications.Add(jobApplication);
         await DbContext.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken);
         return jobApplication;
     }
 
-    protected async Task<List<JobApplication>> CreateJobApplicationsAsync(int count)
+    protected async Task<List<T>> RegisterJobApplicationsInDatabaseAsync<T>(List<T> jobApplications) where T : JobApplication
     {
-        var jobApplications = JobApplicationGenerator.Generate(count);
         DbContext.JobApplications.AddRange(jobApplications);
         await DbContext.SaveChangesAsync(cancellationToken: TestContext.Current.CancellationToken);
         return jobApplications;
@@ -37,25 +103,67 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
 
     protected async Task AssertNumberOfJobApplicationsInDatabaseAsync(int count)
     {
-        var numberOfJobApplications = await VerificationDbContext.JobApplications
+        var numberOfJobApplications = await VerificationDbContext
+            .JobApplications
             .CountAsync(TestContext.Current.CancellationToken);
         Assert.Equal(count, numberOfJobApplications);
     }
 
     protected Task<JobApplication> GetPersistedJobApplicationAsync(Guid id)
     {
-        return VerificationDbContext.JobApplications
+        return VerificationDbContext
+            .JobApplications
             .AsNoTracking()
             .SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
     }
 
-    protected static JobApplicationRequest GenerateJobApplicationRequest(JobApplication jobApplication, string? title = null)
+    protected Task<List<StatusHistory>> GetPersistedHistoryAsync(Guid id)
     {
-        return new JobApplicationRequest(
+        return VerificationDbContext
+            .Set<StatusHistory>()
+            .AsNoTracking()
+            .Where(s => s.JobApplicationId == id)
+            .OrderBy(s => s.CreatedAt)
+            .ThenBy(s => s.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
+    }
+
+    protected static OfferApplicationRequest GenerateJobApplicationRequest(OfferApplication jobApplication,
+        string? title = null)
+    {
+        return new OfferApplicationRequest(
             Title: title ?? jobApplication.Title,
             Company: jobApplication.Company,
             Url: jobApplication.Url,
-            Status: jobApplication.Status,
-            AppliedAt: jobApplication.AppliedOn);
+            AppliedOn: jobApplication.AppliedOn);
     }
+
+    protected static SpontaneousApplicationRequest GenerateSpontaneousRequest(SpontaneousApplication jobApplication)
+    {
+        return new SpontaneousApplicationRequest(
+            Title: jobApplication.Title,
+            Company: jobApplication.Company,
+            AppliedOn: jobApplication.AppliedOn);
+    }
+
+    protected async Task AssertValidationProblemAsync(HttpResponseMessage response, string expectedKey)
+    {
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var problem = await ReadContentAsync<HttpValidationProblemDetails>(response);
+        Assert.Contains(expectedKey, problem.Errors.Keys);
+
+        await AssertNumberOfJobApplicationsInDatabaseAsync(0);
+    }
+
+    // Statuses applied after "sent" to reach a given status, following the workflow
+    protected static readonly Dictionary<ApplicationStatus, ApplicationStatus[]> PathTo = new()
+    {
+        [ApplicationStatus.Sent] = [],
+        [ApplicationStatus.Interview] = [ApplicationStatus.Interview],
+        [ApplicationStatus.Offer] = [ApplicationStatus.Interview, ApplicationStatus.Offer],
+        [ApplicationStatus.Taken] = [ApplicationStatus.Interview, ApplicationStatus.Offer, ApplicationStatus.Taken],
+        [ApplicationStatus.Rejected] = [ApplicationStatus.Rejected],
+        [ApplicationStatus.Withdrawn] = [ApplicationStatus.Withdrawn],
+    };
 }

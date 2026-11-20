@@ -1,5 +1,6 @@
 using System.Data.Common;
 
+using Ambio.Api.IntegrationTests.Fixtures;
 using Ambio.Data;
 
 using Microsoft.AspNetCore.Hosting;
@@ -36,7 +37,8 @@ public class AmbioApiFactory : WebApplicationFactory<IApiMarker>, IAsyncLifetime
 
     private string ConnectionString => _dbContainer.GetConnectionString();
 
-    public FakeTimeProvider FakeTimeProvider { get; } = new();
+    // Starts at a fixed date: the default one (2000-01-01) is older than any generated fixture
+    public FakeTimeProvider FakeTimeProvider { get; } = new(TestClock.Start);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

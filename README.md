@@ -2,9 +2,11 @@
 
 Backend of **Ambio**, a simple job application tracker.
 
-This project is a rewrite of the [Ambio proof of concept](https://github.com/Kevin-HESSE/Ambio), originally built with Blazor. The API is now a standalone backend.
+This project is a rewrite of the [Ambio proof of concept](https://github.com/Kevin-HESSE/Ambio), originally built with
+Blazor. The API is now a standalone backend.
 
-It is meant to run locally as a personal tool, with a public demo as a showcase. There is no authentication, by design. The front-end is a separate project (work in progress).
+It is meant to run locally as a personal tool, with a public demo as a showcase. There is no authentication, by design.
+The front-end is a separate project (work in progress).
 
 ## Tech stack
 
@@ -19,8 +21,10 @@ It is meant to run locally as a personal tool, with a public demo as a showcase.
 
 ## Prerequisites
 
-- **.NET 10 SDK**: see the official [Microsoft documentation](https://dotnet.microsoft.com/en-us/download/dotnet), or use [`dotnetup`](https://learn.microsoft.com/dotnet/core/tools/dotnetup/).
-- **Docker**: see the official [Docker documentation](https://docs.docker.com/get-docker/). It is needed for the database and for the tests.
+- **.NET 10 SDK**: see the official [Microsoft documentation](https://dotnet.microsoft.com/en-us/download/dotnet), or
+  use [`dotnetup`](https://learn.microsoft.com/dotnet/core/tools/dotnetup/).
+- **Docker**: see the official [Docker documentation](https://docs.docker.com/get-docker/). It is needed for the
+  database and for the tests.
 
 ## Setup
 
@@ -55,19 +59,23 @@ The API listens on `http://localhost:5262`. In Development:
 
 ### Configuration
 
-- The connection string is in `src/Ambio.Api/appsettings.Development.json`. It can be overridden with the `ConnectionStrings__DefaultConnection` environment variable.
-- The database container reads `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB` from a `.env` file (ignored by git). Defaults: port `5432`, `ambio` for the rest. If you change them, update the connection string too.
+- The connection string is in `src/Ambio.Api/appsettings.Development.json`. It can be overridden with the
+  `ConnectionStrings__DefaultConnection` environment variable.
+- The database container reads `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB` from a `.env`
+  file (ignored by git). Defaults: port `5432`, `ambio` for the rest. If you change them, update the connection string
+  too.
 
 ## Running tests
 
-Docker must be running. Testcontainers starts its own PostgreSQL container, so the `docker compose` database is not needed.
+Docker must be running. Testcontainers starts its own PostgreSQL container, so the `docker compose` database is not
+needed.
 
 ```shell
 # All tests
 dotnet test
 
 # One test class
-dotnet test --project tests/Ambio.Api.IntegrationTests --filter-class "*CreateTests"
+dotnet test --project tests/Ambio.Api.IntegrationTests --filter-class "*CreateOfferTests"
 
 # One test method
 dotnet test --project tests/Ambio.Api.IntegrationTests --filter-method "*GetById_WhenJobApplicationExists_ShouldReturnOk"
@@ -87,8 +95,9 @@ src/
     └── Ambio.Api.http   # Ready-to-use HTTP requests
 tests/Ambio.Api.IntegrationTests/
 ├── JobApplications/     # One test class per endpoint
+├── Fixtures/            # Test data builders and fake clock helpers
 └── AmbioApiFactory.cs, BaseIntegrationTests.cs
-docs/                    # Reference notes and audits (in French)
+docs/                    # Conception, reference notes, explorations and audits (in French)
 ```
 
 Project references:
@@ -99,17 +108,21 @@ Ambio.Api ──► Ambio.Application ──► Ambio.Data ──► Ambio.Domai
 ```
 
 - `Ambio.Domain` has no dependencies.
-- EF Core is only referenced by `Ambio.Data` and `Ambio.Migrations`. `Ambio.Application` uses the `DbContext` directly, without a repository layer.
+- EF Core is only referenced by `Ambio.Data` and `Ambio.Migrations`. `Ambio.Application` uses the `DbContext` directly,
+  without a repository layer.
 - `Ambio.Api` is the startup project. It references `Ambio.Migrations` so that the migrations are loaded at runtime.
 
 ## Database & migrations
 
-The `DbContext` lives in `Ambio.Data`, and the migrations in `Ambio.Migrations`. Every `dotnet ef` command needs two options:
+The `DbContext` lives in `Ambio.Data`, and the migrations in `Ambio.Migrations`. Every `dotnet ef` command needs two
+options:
 
 - `--project src/Ambio.Migrations`: where the migrations are written;
-- `--startup-project src/Ambio.Api`: the project that is run to build the configured `DbContext` (connection string, naming convention, interceptors).
+- `--startup-project src/Ambio.Api`: the project that is run to build the configured `DbContext` (connection string,
+  naming convention, interceptors).
 
-New migrations are created at the root of `Ambio.Migrations`, next to the model snapshot, in the `Ambio.Migrations` namespace.
+New migrations are created at the root of `Ambio.Migrations`, next to the model snapshot, in the `Ambio.Migrations`
+namespace.
 
 ```shell
 # Check whether the model has changes without a migration
@@ -133,34 +146,37 @@ docker compose down -v
 
 ## API
 
-| Method   | Route                     | Responses                  |
-|----------|---------------------------|----------------------------|
-| `GET`    | `/job-applications`       | `200`                      |
-| `GET`    | `/job-applications/{id}`  | `200`, `404`               |
-| `POST`   | `/job-applications`       | `201`, `400`               |
-| `PUT`    | `/job-applications/{id}`  | `200`, `400`, `404`        |
-| `DELETE` | `/job-applications/{id}`  | `204`, `404`               |
+| Method | Route                            | Description                         | Responses                  |
+|--------|----------------------------------|-------------------------------------|----------------------------|
+| `GET`  | `/job-applications`              | Paginated, filtered and sorted list | `200`, `400`               |
+| `GET`  | `/job-applications/{id}`         | Details with status history         | `200`, `404`               |
+| `POST` | `/job-applications`              | Create an application for an offer  | `201`, `400`               |
+| `POST` | `/job-applications/spontaneous`  | Create a spontaneous application    | `201`, `400`               |
+| `PUT`  | `/job-applications/{id}`         | Update title, company and URL       | `200`, `400`, `404`, `409` |
+| `POST` | `/job-applications/{id}/status`  | Change the status                   | `204`, `400`, `404`, `409` |
+| `POST` | `/job-applications/{id}/archive` | Archive an application              | `204`, `404`, `409`        |
+| `POST` | `/job-applications/{id}/reopen`  | Reopen an archived application      | `204`, `404`, `409`        |
 
-Request body for `POST` and `PUT`:
+Main rules:
 
-```json
-{
-  "title": "Backend developer",
-  "company": "Acme",
-  "url": "https://acme.io/jobs/1",
-  "status": 1,
-  "appliedAt": "2026-11-03"
-}
-```
+- An application is either for an offer (with a `url`) or spontaneous (no `url`).
+- A new application starts with the `sent` status. Statuses then follow a workflow: `sent` → `interview` → `offer` →
+  `taken`, and `rejected` or `withdrawn` at any step before the end. Going back is not possible.
+- Archived applications are read-only: any change returns `409`.
+- Enums are strings in requests and responses (`"interview"`), case-insensitive.
+- Dates use the `yyyy-MM-dd` format.
+- Errors are returned as ProblemDetails.
 
-- `status` is sent as a number: `0` Draft, `1` Applied, `2` Interview, `3` Offer, `4` Rejected, `5` Withdrawn. Responses return a display label (`"Offer received"`). Aligning both directions is on the [roadmap](ROADMAP.md).
-- `appliedAt` is optional, formatted as `yyyy-MM-dd`.
+The full contract (filters, request bodies, responses) is described in French in [
+`docs/conception/endpoints.md`](docs/conception/endpoints.md).
 
 Ready-to-use requests are in [`src/Ambio.Api/Ambio.Api.http`](src/Ambio.Api/Ambio.Api.http).
 
 ## Documentation
 
 - [ROADMAP.md](ROADMAP.md): what is done and what comes next.
+- [docs/conception](docs/conception): functional description, tables and endpoints, in French.
 - [docs/references](docs/references): reference notes on the stack, in French.
+- [docs/explorations](docs/explorations): technical explorations, in French.
 - [docs/audits](docs/audits): security and technical audits, in French.
 - [CLAUDE.md](CLAUDE.md): guidelines for Claude Code.

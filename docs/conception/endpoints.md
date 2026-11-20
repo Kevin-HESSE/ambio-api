@@ -58,18 +58,27 @@ La route renvoie une liste paginée de candidatures. Par défaut, seules les can
 
 Les filtres suivants sont disponibles. Ils peuvent se cumuler :
 
-| Paramètre      | Description                                      | Valeur                     | Règle                 | Défaut | Exemple                                   |
-|----------------|:-------------------------------------------------|----------------------------|:----------------------|:-------|-------------------------------------------|
-| `status`       | Filtre par statut, plusieurs valeurs possibles   | [Voir](./description.md)   | Aucune                | Aucune | `/job-applications?status=sent,interview` |
-| `search`       | Filtre par titre par une recherche partielle     | Chaîne de caractères       | Insensible à la casse | Aucune | `/job-applications?search=php`            |
-| `company`      | Filtre par entreprise par une recherche stricte  | Chaîne de caractères       | Insensible à la casse | Aucune | `/job-applications?company=acme`          |
-| `archived`     | Filtre sur l'archivage                           | `none`, `only`, `included` | Aucune                | `none` | `/job-applications?archived=only`         |
-| `page`         | Détermine le lot d'éléments renvoyés             | Nombre                     | Strictement positif   | 1      | `/job-applications?page=2`                |
-| `itemsPerPage` | Détermine le nombre d'éléments renvoyés par page | Nombre                     | Min: 1, Max: 100      | 10     | `/job-applications?itemsPerPage=50`       |
-| `order[date]`  | Trie les candidatures par date de création       | `asc`, `desc`              | Aucune                | `desc` | `/job-applications?order[date]=asc`       |
-| `order[title]` | Trie les candidatures par titre                  | `asc`, `desc`              | Aucune                | Aucune | `/job-applications?order[title]=asc`      |
+| Paramètre      | Description                                      | Valeur                     | Règle                 | Défaut | Exemple                                                |
+|----------------|:-------------------------------------------------|----------------------------|:----------------------|:-------|--------------------------------------------------------|
+| `status`       | Filtre par statut, paramètre répétable           | [Voir](./description.md)   | Insensible à la casse | Aucune | `/job-applications?status=sent&status=interview`       |
+| `search`       | Filtre par titre par une recherche partielle     | Chaîne de caractères       | Insensible à la casse | Aucune | `/job-applications?search=php`                         |
+| `company`      | Filtre par entreprise par une recherche stricte  | Chaîne de caractères       | Insensible à la casse | Aucune | `/job-applications?company=acme`                       |
+| `archived`     | Filtre sur l'archivage                           | `none`, `only`, `included` | Insensible à la casse | `none` | `/job-applications?archived=only`                      |
+| `page`         | Détermine le lot d'éléments renvoyés             | Nombre                     | Strictement positif   | 1      | `/job-applications?page=2`                             |
+| `itemsPerPage` | Détermine le nombre d'éléments renvoyés par page | Nombre                     | Min: 1, Max: 100      | 10     | `/job-applications?itemsPerPage=50`                    |
+| `order[date]`  | Trie les candidatures par date de création       | `asc`, `desc`              | Insensible à la casse | `desc` | `/job-applications?order[date]=asc`                    |
+| `order[title]` | Trie les candidatures par titre                  | `asc`, `desc`              | Insensible à la casse | Aucune | `/job-applications?order[title]=asc`                   |
 
-Si une valeur incorrecte est fournie dans les filtres, un message d'erreur est renvoyé.
+Si une valeur incorrecte est fournie dans les filtres, une erreur `400` est renvoyée au format ProblemDetails. Les clés
+de l'objet `errors` reprennent le nom du paramètre (`page`, `order[date]`). Pour `status`, la clé contient la position de
+la valeur fautive (`status[0]`).
+
+> Les paramètres `status`, `archived`, `order[date]` et `order[title]` n'acceptent que les noms de valeurs. Un nombre ou une liste séparée par des virgules (`status=sent,interview`) renvoie une erreur `400`. Pour plusieurs statuts, il faut répéter le paramètre.
+
+> Un paramètre vide est ignoré, comme s'il était absent. Cela concerne `search`, `company`, `status`, `archived`,
+> `order[date]` et `order[title]`. Par exemple, `archived=` applique la valeur par défaut `none`.
+
+> Les caractères `%` et `_` sont recherchés tels quels dans `search` et `company`.
 
 > L'ordre par défaut affiche les candidatures créées de la plus récente à la plus ancienne. Lorsque plusieurs tris sont
 > demandés, la priorité est la suivante (du plus prioritaire au moins prioritaire) :
@@ -101,6 +110,7 @@ Le contenu de la réponse renvoyée, en cas de succès, est le suivant :
             "id": "string",
             "title": "string",
             "company": "string",
+            "kind": "string",
             "url": "string|null",
             "currentStatus": "string",
             "appliedOn": "string",

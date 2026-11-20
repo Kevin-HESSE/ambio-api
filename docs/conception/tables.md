@@ -62,6 +62,7 @@ d'une candidature à partir de son envoi. L'historique ne peut pas être modifi�
 | `status_to`          | enum        | NOT NULL                                       | Nouveau statut de la candidature                   |
 | `changed_at`         | date        | NOT NULL                                       | Date du changement de statut, donnée par le client |
 | `created_at`         | timestamptz | DEFAULT NOW                                    | Date de création de l'entrée, côté serveur         |
+| `updated_at`         | timestamptz | DEFAULT NOW                                    | Date de mise à jour de l'entrée, côté serveur         |
 
 Lors de la création d'une candidature, une entrée est créée dans cette table avec le statut actuel de la candidature
 dans la colonne `status_to`, et la valeur `created` dans la colonne `status_from`. Un historique commence donc toujours
