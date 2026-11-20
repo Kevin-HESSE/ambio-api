@@ -8,10 +8,12 @@ public class JobApplicationRequestValidator : AbstractValidator<JobApplicationRe
     {
         RuleFor(ja => ja.Title)
             .NotEmpty()
+            .MaximumLength(128)
             .OverridePropertyName("title");
 
         RuleFor(ja => ja.Company)
             .NotEmpty()
+            .MaximumLength(128)
             .OverridePropertyName("company");
 
         RuleFor(ja => ja.AppliedOn)

@@ -11,6 +11,7 @@ public class OfferApplicationRequestValidator : AbstractValidator<OfferApplicati
         Include(new JobApplicationRequestValidator(timeProvider));
 
         RuleFor(ja => ja.Url)
+            .MaximumLength(2048)
             .MustBeAValidUrl()
             .OverridePropertyName("url");
     }

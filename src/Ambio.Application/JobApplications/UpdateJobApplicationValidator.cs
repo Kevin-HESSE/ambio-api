@@ -13,13 +13,16 @@ public class UpdateJobApplicationValidator : AbstractValidator<UpdateJobApplicat
     {
         RuleFor(x => x.Title)
             .NotEmpty()
+            .MaximumLength(128)
             .OverridePropertyName("title");
 
         RuleFor(x => x.Company)
             .NotEmpty()
+            .MaximumLength(128)
             .OverridePropertyName("company");
 
         RuleSet(OfferApplicationRules, () => RuleFor(x => x.Url)
+            .MaximumLength(2048)
             .MustBeAValidUrl()
             .OverridePropertyName("url"));
 
