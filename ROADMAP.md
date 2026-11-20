@@ -22,17 +22,21 @@ Status: **Done** · **Next** · **Planned** · **Later**
 - [x] Sorting on `GET /job-applications`: `order[date]`, `order[title]`
 - [x] Integration tests for filters, sorting and validation on `GET /job-applications`
 - [x] ProblemDetails for empty error responses
-- [ ] String enums in the JSON contract, same value in requests and responses (responses done, request bodies
-  still accept numbers)
-- [ ] Align `AppliedAt` / `AppliedOn` naming (responses done, request still uses `appliedAt`)
-- [ ] Validation aligned with database constraints (max lengths, `http`/`https` URLs only)
-- [ ] Longer URL column (2048)
+- [x] Offer and spontaneous applications (`POST /job-applications`, `POST /job-applications/spontaneous`)
+- [x] Update restricted to title, company and URL, with URL rules per application kind
+- [x] Archive and reopen endpoints, replacing `DELETE`. Archived applications are read-only (`409`)
+- [x] Status change endpoint with a workflow, and status history in the detailed response
+- [x] String enums in the JSON contract, same value in requests and responses
+- [x] `appliedOn` naming in requests and responses, mandatory, not in the future
+- [x] Validation aligned with database constraints (max lengths, `http`/`https` URLs only)
+- [x] Longer URL column (2048)
+- [ ] `GET /companies`, based on the `company` column
 - [ ] Exception handler for unhandled errors
 - [ ] Stable validation errors (fixed culture, keys named after the request fields; done for collection filters)
 - [ ] CORS policy for the front-end, with explicit origins
 - [ ] Bind PostgreSQL to `127.0.0.1` in `docker-compose.yaml`
 - [ ] OpenAPI metadata (names, summaries, tags)
-- [ ] Integration tests for invalid payloads (`400` on create and update)
+- [x] Integration tests for invalid payloads (`400` on create, update and status change)
 - [x] Typed result on `GET /job-applications` for the OpenAPI document
 
 ## Layered architecture — Done

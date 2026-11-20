@@ -1,21 +1,22 @@
 @Ambio = http://localhost:5262
-# Replace with an id returned by the POST request
+# Replace with an id returned by a POST request
 @id = 00000000-0000-0000-0000-000000000000
 
-### List all job applications
+### List job applications (non-archived, page 1, 10 items, newest first)
 GET {{Ambio}}/job-applications
 Accept: application/json
 
-### List all job applications
-GET {{Ambio}}/job-applications?status=sent
+### List job applications with filters and sorting
+# status: sent, interview, offer, taken, rejected, withdrawn (repeat the parameter for several values)
+# archived: none, only, included
+GET {{Ambio}}/job-applications?status=sent&status=interview&search=developer&company=acme&archived=included&order[date]=asc&order[title]=asc&page=1&itemsPerPage=20
 Accept: application/json
 
-### Get a job application by id
+### Get a job application by id, with its status history
 GET {{Ambio}}/job-applications/{{id}}
 Accept: application/json
 
-### Create a job application
-# status: 0 Draft, 1 Applied, 2 Interview, 3 Offer, 4 Rejected, 5 Withdrawn
+### Create a job application for an offer
 POST {{Ambio}}/job-applications
 Content-Type: application/json
 
@@ -23,21 +24,43 @@ Content-Type: application/json
   "title": "Backend developer",
   "company": "Acme",
   "url": "https://acme.io/jobs/1",
-  "status": 1,
-  "appliedAt": "2026-11-03"
+  "appliedOn": "2026-11-03"
+}
+
+### Create a spontaneous job application
+POST {{Ambio}}/job-applications/spontaneous
+Content-Type: application/json
+
+{
+  "title": "Backend developer",
+  "company": "Globex",
+  "appliedOn": "2026-11-03"
 }
 
 ### Update a job application
+# url is required for an offer, and must be null for a spontaneous application
 PUT {{Ambio}}/job-applications/{{id}}
 Content-Type: application/json
 
 {
   "title": "Senior backend developer",
   "company": "Acme",
-  "url": "https://acme.io/jobs/1",
-  "status": 2,
-  "appliedAt": "2026-11-03"
+  "url": "https://acme.io/jobs/1"
 }
 
-### Delete a job application
-DELETE {{Ambio}}/job-applications/{{id}}
+### Change the status of a job application
+# status: interview, offer, taken, rejected, withdrawn
+# date: optional, today by default
+POST {{Ambio}}/job-applications/{{id}}/status
+Content-Type: application/json
+
+{
+  "status": "interview",
+  "date": "2026-11-10"
+}
+
+### Archive a job application
+POST {{Ambio}}/job-applications/{{id}}/archive
+
+### Reopen an archived job application
+POST {{Ambio}}/job-applications/{{id}}/reopen
