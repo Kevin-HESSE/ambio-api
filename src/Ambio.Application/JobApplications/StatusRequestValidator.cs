@@ -9,8 +9,10 @@ public class StatusRequestValidator : AbstractValidator<StatusRequest>
     public StatusRequestValidator(TimeProvider timeProvider)
     {
         RuleFor(x => x.Status)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty()
-            .IsEnumName(typeof(ApplicationStatus), caseSensitive: false)
+            .Must(status => StatusHistoryWorkflow.IsNameOf(status, StatusHistoryWorkflow.Targets))
+            .WithMessage("Invalid status, use interview, offer, taken, rejected or withdrawn")
             .OverridePropertyName("status");
 
         RuleFor(x => x.Date)

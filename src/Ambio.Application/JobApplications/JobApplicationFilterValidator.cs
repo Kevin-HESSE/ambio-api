@@ -17,7 +17,7 @@ public class JobApplicationFilterValidator : AbstractValidator<IJobApplicationFi
 
         RuleForEach(f => f.Status)
             .Where(value => !string.IsNullOrWhiteSpace(value))
-            .IsEnumName(typeof(ApplicationStatus), caseSensitive: false)
+            .Must(status => StatusHistoryWorkflow.IsNameOf(status, StatusHistoryWorkflow.Statuses))
             .OverridePropertyName("status")
             .WithMessage("Invalid status option, use sent, interview, offer, taken, rejected or withdrawn. " +
                          "Repeat the parameter for several values");
