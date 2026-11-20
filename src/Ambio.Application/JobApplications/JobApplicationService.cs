@@ -120,7 +120,8 @@ public class JobApplicationService
     public async Task<ResultFor<JobApplicationResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var jobApplication = await _ambioDbContext.JobApplications
-            .FindAsync([id], cancellationToken: cancellationToken);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ja => ja.Id == id, cancellationToken: cancellationToken);
 
         return jobApplication is not null
             ? ResultFor<JobApplicationResponse>.Success(jobApplication.ToResponse())
@@ -166,7 +167,7 @@ public class JobApplicationService
         CancellationToken cancellationToken)
     {
         var existingApplication = await _ambioDbContext.JobApplications
-            .SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         if (existingApplication is null)
         {
