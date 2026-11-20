@@ -51,6 +51,11 @@ public abstract class BaseCreateTests : BaseJobApplicationTests
         Assert.Equal((DateOnly?)payload["appliedOn"], persistedJobApplication.AppliedOn);
         Assert.Equal(ApplicationStatus.Sent, persistedJobApplication.Status);
         Assert.Null(persistedJobApplication.ArchivedAt);
+
+        var entry = Assert.Single(await GetPersistedHistoryAsync(content.Id));
+        Assert.Equal(ApplicationStatus.Created, entry.StatusFrom);
+        Assert.Equal(ApplicationStatus.Sent, entry.StatusTo);
+        Assert.Equal((DateOnly?)payload["appliedOn"], entry.ChangedAt);
     }
 
     [Fact]
@@ -61,7 +66,7 @@ public abstract class BaseCreateTests : BaseJobApplicationTests
         var response = await Client.PostAsJsonAsync(Endpoint, payload, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-        var content = await ReadContentAsync<JobApplicationResponse>(response);
+        var content = await ReadContentAsync<JobApplicationDetailedResponse>(response);
 
         var expectedLocation = new Uri($"{BaseUrl}/{content.Id}", UriKind.Relative);
         Assert.Equal(expectedLocation, response.Headers.Location);
@@ -73,6 +78,10 @@ public abstract class BaseCreateTests : BaseJobApplicationTests
         Assert.Equal(ExpectedKind.ToString(), content.Kind);
         Assert.Equal(ApplicationStatus.Sent, content.CurrentStatus);
         Assert.Null(content.ArchivedAt);
+
+        var entry = Assert.Single(content.History);
+        Assert.Equal(ApplicationStatus.Sent, entry.Status);
+        Assert.Equal((DateOnly?)payload["appliedOn"], entry.Date);
     }
 
     [Fact]

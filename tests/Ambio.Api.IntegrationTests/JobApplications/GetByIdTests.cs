@@ -1,6 +1,7 @@
 using System.Net;
 
 using Ambio.Application.JobApplications;
+using Ambio.Domain.JobApplications;
 
 namespace Ambio.Api.IntegrationTests.JobApplications;
 
@@ -13,13 +14,30 @@ public class GetByIdTests : BaseJobApplicationTests
     [Fact]
     public async Task GetById_WhenJobApplicationExists_ShouldReturnOk()
     {
-        var jobApplication = await CreateOfferApplicationAsync();
+        var jobApplication = await CreateJobApplicationAsync(ApplicationKind.Offer, ApplicationStatus.Sent);
 
         var response = await Client.GetAsync($"{BaseUrl}/{jobApplication.Id}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var content = await ReadContentAsync<JobApplicationResponse>(response);
+        var content = await ReadContentAsync<JobApplicationDetailedResponse>(response);
         Assert.Equal(jobApplication.Title, content.Title);
+
+        var entry = Assert.Single(content.History);
+        Assert.Equal(ApplicationStatus.Sent, entry.Status);
+        Assert.Equal(jobApplication.AppliedOn, entry.Date);
+    }
+
+    [Fact]
+    public async Task GetById_WhenJobApplicationIsArchived_ShouldReturnHistory()
+    {
+        var jobApplication = await CreateJobApplicationAsync(ApplicationKind.Offer, ApplicationStatus.Interview, archived: true);
+
+        var response = await Client.GetAsync($"{BaseUrl}/{jobApplication.Id}", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var content = await ReadContentAsync<JobApplicationDetailedResponse>(response);
+        Assert.NotNull(content.ArchivedAt);
+        Assert.Equal([ApplicationStatus.Sent, ApplicationStatus.Interview], content.History.Select(h => h.Status));
     }
 
     [Fact]

@@ -52,6 +52,31 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
         };
     }
 
+    /// <summary>Creates an application as the API would, then walks the workflow up to the given status.
+    /// Each step is saved separately with the clock moved forward, so that created_at is distinct.</summary>
+    protected async Task<JobApplication> CreateJobApplicationAsync(ApplicationKind kind, ApplicationStatus status, bool archived = false)
+    {
+        JobApplication jobApplication = kind switch
+        {
+            ApplicationKind.Offer => FixturesFor.JobApplication.GetOffer(archived, status: ApplicationStatus.Sent),
+            ApplicationKind.Spontaneous => FixturesFor.JobApplication.GetSpontaneous(archived, status: ApplicationStatus.Sent),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
+
+        jobApplication.MarkAsSent();
+        await RegisterJobApplicationInDatabaseAsync(jobApplication);
+
+        foreach (var step in PathTo[status])
+        {
+            FakeTimeProvider.Advance(TimeSpan.FromSeconds(1));
+            Assert.True(jobApplication.ChangeStatus(step, jobApplication.AppliedOn));
+            await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        FakeTimeProvider.Advance(TimeSpan.FromSeconds(1));
+        return jobApplication;
+    }
+
     protected async Task<IEnumerable<JobApplication>> CreateJobApplicationAsync(ApplicationKind kind, int count)
     {
         return kind switch
@@ -92,6 +117,17 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
             .SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
     }
 
+    protected Task<List<StatusHistory>> GetPersistedHistoryAsync(Guid id)
+    {
+        return VerificationDbContext
+            .Set<StatusHistory>()
+            .AsNoTracking()
+            .Where(s => s.JobApplicationId == id)
+            .OrderBy(s => s.CreatedAt)
+            .ThenBy(s => s.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
+    }
+
     protected static OfferApplicationRequest GenerateJobApplicationRequest(OfferApplication jobApplication,
         string? title = null)
     {
@@ -119,4 +155,15 @@ public abstract class BaseJobApplicationTests : BaseIntegrationTests
 
         await AssertNumberOfJobApplicationsInDatabaseAsync(0);
     }
+
+    // Statuses applied after "sent" to reach a given status, following the workflow
+    protected static readonly Dictionary<ApplicationStatus, ApplicationStatus[]> PathTo = new()
+    {
+        [ApplicationStatus.Sent] = [],
+        [ApplicationStatus.Interview] = [ApplicationStatus.Interview],
+        [ApplicationStatus.Offer] = [ApplicationStatus.Interview, ApplicationStatus.Offer],
+        [ApplicationStatus.Taken] = [ApplicationStatus.Interview, ApplicationStatus.Offer, ApplicationStatus.Taken],
+        [ApplicationStatus.Rejected] = [ApplicationStatus.Rejected],
+        [ApplicationStatus.Withdrawn] = [ApplicationStatus.Withdrawn],
+    };
 }

@@ -19,13 +19,13 @@ public class UpdateTests : BaseJobApplicationTests
     [Fact]
     public async Task Update_WhenOfferApplicationExists_ShouldReturnTheUpdatedJobApplication()
     {
-        var jobApplication = await CreateOfferApplicationAsync();
+        var jobApplication = (OfferApplication)await CreateJobApplicationAsync(ApplicationKind.Offer, ApplicationStatus.Interview);
         var payload = GenerateOfferPayload(jobApplication);
 
         var response = await PutAsync(jobApplication.Id, payload);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var content = await ReadContentAsync<JobApplicationResponse>(response);
+        var content = await ReadContentAsync<JobApplicationDetailedResponse>(response);
         Assert.Equal(jobApplication.Id, content.Id);
         Assert.Equal((string?)payload["title"], content.Title);
         Assert.Equal((string?)payload["company"], content.Company);
@@ -33,12 +33,13 @@ public class UpdateTests : BaseJobApplicationTests
         Assert.Equal(nameof(ApplicationKind.Offer), content.Kind);
         Assert.Equal(jobApplication.Status, content.CurrentStatus);
         Assert.Equal(jobApplication.AppliedOn, content.AppliedOn);
+        Assert.Equal([ApplicationStatus.Sent, ApplicationStatus.Interview], content.History.Select(h => h.Status));
     }
 
     [Fact]
     public async Task Update_WhenOfferApplicationExists_ShouldPersistChanges()
     {
-        var jobApplication = await CreateOfferApplicationAsync();
+        var jobApplication = (OfferApplication)await CreateJobApplicationAsync(ApplicationKind.Offer, ApplicationStatus.Interview);
         var payload = GenerateOfferPayload(jobApplication);
 
         var response = await PutAsync(jobApplication.Id, payload);
@@ -50,6 +51,9 @@ public class UpdateTests : BaseJobApplicationTests
         Assert.Equal(UpdatedUrl, persisted.Url);
         Assert.Equal(jobApplication.Status, persisted.Status);
         Assert.Equal(jobApplication.AppliedOn, persisted.AppliedOn);
+
+        var history = await GetPersistedHistoryAsync(jobApplication.Id);
+        Assert.Equal([ApplicationStatus.Sent, ApplicationStatus.Interview], history.Select(h => h.StatusTo));
     }
 
     [Theory]
@@ -57,7 +61,7 @@ public class UpdateTests : BaseJobApplicationTests
     [InlineData(false)]
     public async Task Update_WhenSpontaneousApplicationExists_ShouldPersistChanges(bool sendNullUrl)
     {
-        var jobApplication = await CreateSpontaneousApplicationAsync();
+        var jobApplication = (SpontaneousApplication)await CreateJobApplicationAsync(ApplicationKind.Spontaneous, ApplicationStatus.Interview);
         var payload = GenerateSpontaneousPayload(jobApplication);
 
         if (!sendNullUrl)
@@ -68,15 +72,19 @@ public class UpdateTests : BaseJobApplicationTests
         var response = await PutAsync(jobApplication.Id, payload);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var content = await ReadContentAsync<JobApplicationResponse>(response);
+        var content = await ReadContentAsync<JobApplicationDetailedResponse>(response);
         Assert.Equal((string?)payload["title"], content.Title);
         Assert.Equal((string?)payload["company"], content.Company);
         Assert.Null(content.Url);
         Assert.Equal(nameof(ApplicationKind.Spontaneous), content.Kind);
+        Assert.Equal([ApplicationStatus.Sent, ApplicationStatus.Interview], content.History.Select(h => h.Status));
 
         var persisted = Assert.IsType<SpontaneousApplication>(await GetPersistedJobApplicationAsync(jobApplication.Id));
         Assert.Equal((string?)payload["title"], persisted.Title);
         Assert.Equal((string?)payload["company"], persisted.Company);
+
+        var history = await GetPersistedHistoryAsync(jobApplication.Id);
+        Assert.Equal([ApplicationStatus.Sent, ApplicationStatus.Interview], history.Select(h => h.StatusTo));
     }
 
     [Fact]

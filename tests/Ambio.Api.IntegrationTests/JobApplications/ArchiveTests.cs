@@ -28,7 +28,7 @@ public class ArchiveTests : BaseJobApplicationTests
     [InlineData(ApplicationKind.Spontaneous)]
     public async Task Archive_WhenJobApplicationExists_ShouldPersistArchiveDate(ApplicationKind kind)
     {
-        var jobApplication = await CreateJobApplicationAsync(kind);
+        var jobApplication = await CreateJobApplicationAsync(kind, ApplicationStatus.Interview);
         FakeTimeProvider.Advance(TimeSpan.FromDays(1));
         var expectedArchivedAt = FakeTimeProvider.GetUtcNow().UtcDateTime;
 
@@ -37,6 +37,9 @@ public class ArchiveTests : BaseJobApplicationTests
 
         var persisted = await GetPersistedJobApplicationAsync(jobApplication.Id);
         Assert.Equal(expectedArchivedAt, persisted.ArchivedAt);
+
+        var history = await GetPersistedHistoryAsync(jobApplication.Id);
+        Assert.Equal([ApplicationStatus.Sent, ApplicationStatus.Interview], history.Select(h => h.StatusTo));
     }
 
     [Fact]
