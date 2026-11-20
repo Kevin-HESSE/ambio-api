@@ -134,7 +134,7 @@ public class GetAllTests : BaseJobApplicationTests
 
         const string company = "Ambio Pagination Company";
         await RegisterJobApplicationsInDatabaseAsync(
-            [..FixturesFor.JobApplication.GetOffer(count: 12, company: company)]);
+            [.. FixturesFor.JobApplication.GetOffer(count: 12, company: company)]);
 
         var url = $"{BaseUrl}?company={Uri.EscapeDataString(company)}&order[date]=Asc&itemsPerPage=5&page=2";
         var response = await Client.GetAsync(url, TestContext.Current.CancellationToken);
@@ -373,6 +373,7 @@ public class GetAllTests : BaseJobApplicationTests
     [InlineData("status=foo")]
     [InlineData("status=99")]
     [InlineData("status=3")]
+    [InlineData("status=created")]
     [InlineData("order[date]=foo")]
     [InlineData("order[title]=foo")]
     public async Task GetAll_WhenFilterIsInvalid_ShouldReturnBadRequest(string queryString)

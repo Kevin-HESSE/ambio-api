@@ -156,6 +156,8 @@ public class ChangeStatusTests : BaseJobApplicationTests
     [InlineData("")]
     [InlineData("1")]
     [InlineData("sent,interview")]
+    [InlineData("sent")]
+    [InlineData("created")]
     [InlineData(null)]
     public async Task ChangeStatus_WhenStatusIsInvalid_ShouldReturnValidationProblem(string? status)
     {
@@ -168,7 +170,6 @@ public class ChangeStatusTests : BaseJobApplicationTests
     }
 
     [Theory]
-    [InlineData(ApplicationStatus.Sent)]
     [InlineData(ApplicationStatus.Interview)]
     [InlineData(ApplicationStatus.Offer)]
     public async Task ChangeStatus_WhenStatusIsIdentical_ShouldReturnConflict(ApplicationStatus status)
@@ -185,8 +186,6 @@ public class ChangeStatusTests : BaseJobApplicationTests
     [Theory]
     [InlineData(ApplicationStatus.Sent, ApplicationStatus.Offer)]
     [InlineData(ApplicationStatus.Sent, ApplicationStatus.Taken)]
-    [InlineData(ApplicationStatus.Sent, ApplicationStatus.Created)]
-    [InlineData(ApplicationStatus.Interview, ApplicationStatus.Sent)]
     [InlineData(ApplicationStatus.Interview, ApplicationStatus.Taken)]
     [InlineData(ApplicationStatus.Offer, ApplicationStatus.Interview)]
     [InlineData(ApplicationStatus.Taken, ApplicationStatus.Rejected)]
